@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from sqlalchemy import (
     Column,
     Integer,
@@ -11,12 +9,15 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import relationship
 
+from datetime import datetime, UTC
+
 from app.db.database import Base
 
 
 class Task(Base):
 
     __tablename__ = "tasks"
+
 
     id = Column(
         Integer,
@@ -36,31 +37,44 @@ class Task(Base):
 
     status = Column(
         String(50),
-        default="pending"
+        default="todo"
+    )
+
+    priority = Column(
+        String(50),
+        default="medium"
+    )
+
+    due_date = Column(
+        DateTime,
+        nullable=True
     )
 
     assigned_to = Column(
         Integer,
-        ForeignKey("users.id"),
-        nullable=False
+        ForeignKey("users.id")
     )
 
     created_by = Column(
         Integer,
-        ForeignKey("users.id"),
-        nullable=False
+        ForeignKey("users.id")
     )
 
     created_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc)
+        default=lambda:
+            datetime.now(UTC)
     )
 
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
+        default=lambda:
+            datetime.now(UTC),
+
+        onupdate=lambda:
+            datetime.now(UTC)
     )
+
 
     assigned_user = relationship(
         "User",

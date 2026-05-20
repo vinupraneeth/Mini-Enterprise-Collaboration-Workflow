@@ -69,6 +69,21 @@ def update_task_status(
 
     return task
 
+def update_task(
+    db: Session,
+    task,
+    update_data: dict
+):
+
+    for key, value in update_data.items():
+
+        setattr(task, key, value)
+
+    db.commit()
+
+    db.refresh(task)
+
+    return task
 
 
 def delete_task(
