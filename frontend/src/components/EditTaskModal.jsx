@@ -1,156 +1,211 @@
-import {
-  useEffect,
-  useState
-} from "react";
+import { useEffect, useState } from "react"
 
-import api from "../api/axios";
+import axios from "axios"
 
 
-function EditTaskModal({
+export default function EditTaskModal({
+
   task,
+
   closeModal,
+
   fetchTasks
 }) {
 
   const [title, setTitle] =
-    useState("");
+    useState(task.title)
 
-  const [description, setDescription] =
-    useState("");
+  const [description,
+    setDescription] =
+    useState(task.description)
 
-  const [priority, setPriority] =
-    useState("medium");
+  const [priority,
+    setPriority] =
+    useState(task.priority)
 
-  const [status, setStatus] =
-    useState("todo");
+  const [dueDate,
+  setDueDate] =
+  useState("")
 
-  const [dueDate, setDueDate] =
-    useState("");
+  const [assignedTo,
+    setAssignedTo] =
+    useState(
 
-  const [loading, setLoading] =
-    useState(false);
+      task.assigned_to || ""
+    )
+
+  const [users, setUsers] =
+    useState([])
+
+  const token =
+    localStorage.getItem("token")
+
+  const currentUser =
+    JSON.parse(
+      localStorage.getItem("user")
+    )
 
 
   useEffect(() => {
 
-    if (task) {
+    fetchUsers()
 
-      setTitle(task.title);
-
-      setDescription(
-        task.description || ""
-      );
-
-      setPriority(task.priority);
-
-      setStatus(task.status);
-
-      setDueDate(
-
-        task.due_date
-        ?
-        task.due_date.slice(0, 16)
-        :
-        ""
-      );
-    }
-
-  }, [task]);
+  }, [])
 
 
-  const handleUpdate = async () => {
-
-    setLoading(true);
+  const fetchUsers = async () => {
 
     try {
 
-      const token = localStorage.getItem(
-        "token"
-      );
+      const response =
+        await axios.get(
 
-      await api.put(
+          "http://127.0.0.1:8000/users/employees",
 
-        `/tasks/${task.id}`,
-
-        {
-          title,
-          description,
-          priority,
-          status,
-          assigned_to:
-            task.assigned_to,
-          due_date:
-            dueDate || null
-        },
-
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
           }
-        }
-      );
+        )
 
-      alert(
-        "Task updated successfully"
-      );
-
-      closeModal();
-
-      fetchTasks();
+      setUsers(response.data)
 
     } catch (error) {
 
-      console.log(error);
-
-      alert(
-        error?.response?.data?.detail
-        ||
-        "Update failed"
-      );
-
-    } finally {
-
-      setLoading(false);
+      console.error(error)
     }
-  };
+  }
+
+
+  const filteredUsers = users.filter(
+    (userItem) => {
+
+      // ADMIN
+
+      if (
+        currentUser.role === "admin"
+      ) {
+
+        return (
+
+          userItem.role !== "admin"
+
+          &&
+
+          userItem.email !==
+          currentUser.email
+        )
+      }
+
+      // MANAGER
+
+      if (
+        currentUser.role === "manager"
+      ) {
+
+        return (
+          userItem.role ===
+          "employee"
+        )
+      }
+
+      return false
+    }
+  )
+
+
+  const handleSubmit =
+    async (e) => {
+
+      e.preventDefault()
+
+      try {
+
+        await axios.put(
+
+          `http://127.0.0.1:8000/tasks/${task.id}`,
+
+          {
+            title,
+
+            description,
+
+            priority,
+
+            due_date: dueDate,
+
+            status: task.status,
+
+            assigned_to:
+              Number(assignedTo)
+          },
+
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        )
+
+        fetchTasks()
+
+        closeModal()
+
+      } catch (error) {
+
+        console.error(error)
+
+        alert(
+
+          typeof error.response?.data?.detail
+            === "string"
+
+            ? error.response.data.detail
+
+            : "Task update failed"
+        )
+      }
+    }
 
 
   return (
 
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
 
-      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-8">
 
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-700 px-8 py-6 flex justify-between items-center">
+        <div className="flex justify-between items-center mb-6">
 
-          <div>
+          <h2 className="text-2xl font-bold text-gray-800">
 
-            <h2 className="text-3xl font-bold text-white">
-              Edit Task
-            </h2>
+            Edit Task
 
-            <p className="text-indigo-100 mt-1">
-              Update workflow task details
-            </p>
-
-          </div>
+          </h2>
 
           <button
             onClick={closeModal}
-            className="text-white text-3xl hover:opacity-70 transition"
+            className="text-gray-500 hover:text-red-500 text-xl"
           >
-            ×
-          </button>
 
+            ✕
+
+          </button>
         </div>
 
-        <div className="p-8 space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+        >
 
           <div>
 
-            <label className="block mb-2 font-semibold text-gray-700">
-              Task Title
+            <label className="block mb-2 font-medium text-gray-700">
+
+              Title
+
             </label>
 
             <input
@@ -161,150 +216,125 @@ function EditTaskModal({
                   e.target.value
                 )
               }
-              className="w-full border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+              required
+              className="w-full border rounded-xl px-4 py-3"
             />
-
           </div>
 
           <div>
 
-            <label className="block mb-2 font-semibold text-gray-700">
+            <label className="block mb-2 font-medium text-gray-700">
+
               Description
+
             </label>
 
             <textarea
-              rows="5"
               value={description}
               onChange={(e) =>
                 setDescription(
                   e.target.value
                 )
               }
-              className="w-full border border-gray-300 rounded-2xl px-5 py-4 outline-none resize-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+              required
+              rows={4}
+              className="w-full border rounded-xl px-4 py-3"
             />
-
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
 
-            <div>
+            <label className="block mb-2 font-medium text-gray-700">
 
-              <label className="block mb-2 font-semibold text-gray-700">
-                Priority
-              </label>
+              Priority
 
-              <select
-                value={priority}
-                onChange={(e) =>
-                  setPriority(
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-              >
+            </label>
 
-                <option value="low">
-                  Low
-                </option>
-
-                <option value="medium">
-                  Medium
-                </option>
-
-                <option value="high">
-                  High
-                </option>
-
-              </select>
-
-            </div>
-
-            <div>
-
-              <label className="block mb-2 font-semibold text-gray-700">
-                Status
-              </label>
-
-              <select
-                value={status}
-                onChange={(e) =>
-                  setStatus(
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-              >
-
-                <option value="todo">
-                  Todo
-                </option>
-
-                <option value="in_progress">
-                  In Progress
-                </option>
-
-                <option value="done">
-                  Done
-                </option>
-
-              </select>
-
-            </div>
-
-            <div>
-
-              <label className="block mb-2 font-semibold text-gray-700">
-                Due Date
-              </label>
-
-              <input
-                type="datetime-local"
-                value={dueDate}
-                onChange={(e) =>
-                  setDueDate(
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
-              />
-
-            </div>
-
-          </div>
-
-          <div className="flex justify-end gap-4 pt-4">
-
-            <button
-              onClick={closeModal}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold transition"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleUpdate}
-              disabled={loading}
-              className="bg-gradient-to-r from-indigo-600 to-blue-700 hover:opacity-90 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg transition"
-            >
-
-              {
-                loading
-                ?
-                "Saving..."
-                :
-                "Save Changes"
+            <select
+              value={priority}
+              onChange={(e) =>
+                setPriority(
+                  e.target.value
+                )
               }
+              className="w-full border rounded-xl px-4 py-3"
+            >
 
-            </button>
+              <option value="low">
 
+                Low
+
+              </option>
+
+              <option value="medium">
+
+                Medium
+
+              </option>
+
+              <option value="high">
+
+                High
+
+              </option>
+            </select>
           </div>
 
-        </div>
+          <div>
 
+            <label className="block mb-2 font-medium text-gray-700">
+
+              Assign To
+
+            </label>
+
+            <select
+              value={assignedTo}
+              onChange={(e) =>
+                setAssignedTo(
+                  e.target.value
+                )
+              }
+              required
+              className="w-full border rounded-xl px-4 py-3"
+            >
+
+              <option value="">
+
+                Select User
+
+              </option>
+
+              {filteredUsers.map(
+                (userItem) => (
+
+                  <option
+                    key={userItem.id}
+                    value={userItem.id}
+                  >
+
+                    {userItem.name}
+                    {" "}
+                    (
+                    {userItem.role}
+                    )
+
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold shadow-lg transition"
+          >
+
+            Update Task
+
+          </button>
+        </form>
       </div>
-
     </div>
-  );
+  )
 }
-
-export default EditTaskModal;

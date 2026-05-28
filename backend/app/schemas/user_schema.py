@@ -1,9 +1,32 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import (
+    BaseModel,
+    EmailStr
+)
+
 from datetime import datetime
 
-#REGISTRATION SCHEMA
 
-class UserBase(BaseModel):
+class UserCreate(BaseModel):
+
+    name: str
+
+    email: EmailStr
+
+    password: str
+
+    role: str
+
+
+class LoginRequest(BaseModel):
+
+    email: EmailStr
+
+    password: str
+
+
+class UserResponse(BaseModel):
+
+    id: int
 
     name: str
 
@@ -11,34 +34,28 @@ class UserBase(BaseModel):
 
     role: str
 
+    is_active: bool = True
 
-class UserCreate(UserBase):
-
-    password: str
-
-
-class UserResponse(UserBase):
-
-    id: int
-
-    is_active: bool
-
-    created_at: datetime
-
-    updated_at: datetime
+    created_at: datetime | None = None
+    
+    updated_at: datetime | None = None
 
     class Config:
-
         from_attributes = True
 
 
-#LOGIN SCHEMAS
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
 class TokenResponse(BaseModel):
+
     access_token: str
+
     token_type: str
+
+    role: str
+
+    name: str
+
+class UserLogin(BaseModel):
+
+    email: EmailStr
+
+    password: str

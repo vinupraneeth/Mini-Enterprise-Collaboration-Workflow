@@ -12,7 +12,8 @@ from app.schemas.task_schema import (
     TaskResponse,
     TaskStatusUpdate,
     TaskUpdate,
-    TaskAssign
+    TaskAssign,
+    TaskHistoryResponse
 )
 
 from app.services.task_service import (
@@ -22,7 +23,8 @@ from app.services.task_service import (
     change_task_status,
     remove_task,
     edit_task,
-    assign_task
+    assign_task,
+    fetch_task_status_history
 )
 
 from app.core.dependencies import (
@@ -70,6 +72,56 @@ def get_tasks_api(
 
     return fetch_tasks(
         db,
+        current_user
+    )
+
+
+@router.get("/kanban")
+def get_kanban_tasks_api(
+    db: Session = Depends(get_db),
+    current_user = Depends(
+        get_current_user
+    )
+):
+
+    tasks = fetch_tasks(
+        db,
+        current_user
+    )
+
+    return {
+        "todo": [
+            task for task in tasks
+            if task.status == "todo"
+        ],
+        "in_progress": [
+            task for task in tasks
+            if task.status == "in_progress"
+        ],
+        "review": [
+            task for task in tasks
+            if task.status == "review"
+        ],
+        "done": [
+            task for task in tasks
+            if task.status == "done"
+        ]
+    }
+
+
+@router.get(
+    "/{task_id}/status-history",
+    response_model=list[TaskHistoryResponse]
+)
+def get_task_status_history_api(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return fetch_task_status_history(
+        db,
+        task_id,
         current_user
     )
 

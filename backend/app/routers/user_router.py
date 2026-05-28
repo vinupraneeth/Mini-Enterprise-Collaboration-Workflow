@@ -15,7 +15,8 @@ from app.schemas.user_schema import (
 )
 
 from app.core.dependencies import (
-    get_current_user
+    get_current_user,
+    require_admin
 )
 
 
@@ -32,13 +33,39 @@ router = APIRouter(
 def get_users(
     db: Session = Depends(get_db),
     current_user = Depends(
-        get_current_user
+        require_admin
     )
 ):
 
     users = db.query(User).all()
 
     return users
+
+
+@router.get(
+    "/employees",
+    response_model=list[UserResponse]
+)
+def get_employees(
+    db: Session = Depends(get_db),
+    current_user = Depends(
+        get_current_user
+    )
+):
+
+    if current_user.role.lower() not in [
+        "admin",
+        "manager"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
+
+    return db.query(User).filter(
+        User.role == "employee"
+    ).all()
 
 
 @router.get(

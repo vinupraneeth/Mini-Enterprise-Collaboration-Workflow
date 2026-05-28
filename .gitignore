@@ -1,16 +1,41 @@
 # Python
 backend/venv/
+backend/.venv/
+venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 
 # Node
 frontend/node_modules/
+node_modules/
 
 # Environment
 .env
+*.env
+backend/.env
+frontend/.env
+*.local
 
 # VS Code
 .vscode/
+.idea/
 
 # Build
 dist/
+frontend/dist/
+build/
+frontend/build/
+
+# Archives and local database files
+*.zip
+*.db
+*.sqlite
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db

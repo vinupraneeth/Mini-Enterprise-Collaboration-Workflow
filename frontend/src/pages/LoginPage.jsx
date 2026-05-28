@@ -81,6 +81,20 @@ function LoginPage() {
 
         response.data.access_token
       );
+      
+      localStorage.setItem(
+
+        "user",
+
+        JSON.stringify({
+
+          name: response.data.name,
+
+          email: email,
+
+          role: response.data.role
+        })
+      )  
 
       navigate("/dashboard");
 

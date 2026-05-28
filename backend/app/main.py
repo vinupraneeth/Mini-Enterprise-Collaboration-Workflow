@@ -23,6 +23,21 @@ from app.routers.user_router import (
     router as user_router
 )
 
+from app.routers.task_comment_router import (
+    router as task_comment_router
+)
+
+from app.routers.approval_router import (
+    router as approval_router
+)
+
+from app.routers.activity_router import (
+    router as activity_router
+)
+
+from app.routers.dashboard_router import (
+    router as dashboard_router
+)
 
 #CORS MIDDLEWARE COnFIG for CROSS ORIGIN request handling
 app = FastAPI()
@@ -49,3 +64,11 @@ app.include_router(auth_router)
 app.include_router(task_router)
 
 app.include_router(user_router)
+
+app.include_router(task_comment_router)
+
+app.include_router(approval_router)
+
+app.include_router(activity_router)
+
+app.include_router(dashboard_router)

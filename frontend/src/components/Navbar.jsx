@@ -1,5 +1,10 @@
+import { Link } from "react-router-dom"
+
+
 function Navbar({
+
   user,
+
   handleLogout
 }) {
 
@@ -12,7 +17,9 @@ function Navbar({
         <div>
 
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-teal-500 to-emerald-700 bg-clip-text text-transparent">
+
             Enterprise Workflow
+
           </h1>
 
           {
@@ -33,11 +40,15 @@ function Navbar({
                 <div>
 
                   <p className="font-semibold text-gray-800">
+
                     {user.name}
+
                   </p>
 
                   <p className="text-sm text-gray-500 capitalize">
+
                     {user.role}
+
                   </p>
 
                 </div>
@@ -48,12 +59,41 @@ function Navbar({
 
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg transition"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-4">
+
+          <Link
+            to="/dashboard"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-3 rounded-2xl font-semibold shadow-lg transition"
+          >
+
+            Dashboard
+
+          </Link>
+
+          {(user?.role === "admin" ||
+
+            user?.role === "manager") && (
+
+            <Link
+              to="/approvals"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-semibold shadow-lg transition"
+            >
+
+              Approvals
+
+            </Link>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg transition"
+          >
+
+            Logout
+
+          </button>
+
+        </div>
 
       </div>
 

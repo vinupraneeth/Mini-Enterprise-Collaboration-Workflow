@@ -1,237 +1,200 @@
 # Mini Enterprise Workflow Management System - Backend
 
-## Overview
+This is the FastAPI backend for the Mini Enterprise Workflow project. It handles authentication, role-based task management, Kanban workflow validation, task comments, approval reviews, status history, and dashboard data.
 
-This project is a backend system developed using FastAPI for managing enterprise workflow tasks with Role-Based Access Control (RBAC).
+The backend follows a simple layered structure:
 
-The application supports:
-- User authentication using JWT
-- Task management
-- Task assignment workflows
-- Role-based permissions
-- MySQL database integration
-- Alembic database migrations
+```text
+Router -> Service -> Repository -> Database
+```
 
----
-
-# Tech Stack
+## Tech Stack
 
 - FastAPI
-- Python
-- MySQL
 - SQLAlchemy
-- Alembic
-- JWT Authentication
 - Pydantic
-- Uvicorn
-
----
-
-# Project Architecture
-
-The backend follows layered enterprise architecture:
-
-Router → Service → Repository → Database
-
-## Folder Structure
-
-```bash
-backend/
-│
-├── alembic/
-├── app/
-│   ├── core/
-│   ├── db/
-│   ├── models/
-│   ├── repositories/
-│   ├── routers/
-│   ├── schemas/
-│   ├── services/
-│   └── main.py
-│
-├── requirements.txt
-├── alembic.ini
-└── README.md
-```
-
----
-
-# Features
-
-## Authentication
-
-- User Registration
-- User Login
-- JWT Token Authentication
-- Protected APIs
-
----
-
-## Role-Based Access Control
-
-### Admin
-- Create tasks
-- Edit tasks
-- Delete tasks
-- Assign tasks to anyone
-- View all tasks
-
-### Manager
-- Create tasks
-- Assign tasks only to employees
-- Edit own created tasks
-- Delete own created tasks
-- View own created tasks
-
-### Employee
-- View assigned tasks only
-- Update task status only
-
----
-
-# Task Features
-
-- Create Task
-- Edit Task
-- Delete Task
-- Assign Task
-- Update Task Status
-- Get Single Task
-- Get All Tasks
-
----
-
-# Database
-
-Database used:
 - MySQL
-
-ORM:
-- SQLAlchemy
-
-Migration Tool:
 - Alembic
+- JWT authentication
+- Python jose
+- Passlib / bcrypt
 
----
+## Main Features
 
-# API Endpoints
+- User registration and login
+- Password hashing
+- JWT protected APIs
+- Role-based access for Admin, Manager, and Employee
+- Task create, view, update, assign, and delete
+- Role-based task visibility
+- Kanban status flow: `todo -> in_progress -> review -> done`
+- Backend validation for invalid status transitions
+- Task status history
+- Public comments and restricted internal notes
+- Approval requests with Manager and Admin review levels
+- Approval actions: `approve`, `reject`, and `hold`
+- Mandatory comment for rejection
+- Approval history with action, actor, comment, and timestamp
+- Dashboard summary and task distribution APIs
 
-## Authentication
+## Roles
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /auth/register | Register new user |
-| POST | /auth/login | Login user |
-| GET | /auth/me | Get current user |
+Admin:
+- Can view and manage all tasks
+- Can assign tasks
+- Can view all approvals
+- Can complete final approval
+- Can view dashboard analytics
 
----
+Manager:
+- Can create tasks
+- Can assign tasks to employees
+- Can manage related tasks
+- Can review manager-level approvals for related tasks
+- Cannot review another manager's unrelated task approvals
 
-## Tasks
+Employee:
+- Can view assigned tasks
+- Can update assigned task status through the allowed workflow
+- Can add public comments
+- Cannot create or view internal notes
+- Cannot assign or delete tasks
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /tasks | Create task |
-| GET | /tasks | Get tasks |
-| GET | /tasks/{id} | Get single task |
-| PUT | /tasks/{id} | Update task |
-| PATCH | /tasks/{id}/status | Update task status |
-| PATCH | /tasks/{id}/assign | Assign task |
-| DELETE | /tasks/{id} | Delete task |
+## Important APIs
 
----
+Authentication:
 
-# Setup Instructions
-
-## 1. Clone Repository
-
-```bash
-git clone <repository-url>
+```text
+POST /auth/register
+POST /auth/login
+GET  /auth/me
 ```
 
----
+Users:
 
-## 2. Create Virtual Environment
+```text
+GET /users/
+GET /users/employees
+GET /users/{id}
+```
+
+Tasks:
+
+```text
+POST   /tasks/
+GET    /tasks/
+GET    /tasks/kanban
+GET    /tasks/{id}
+PUT    /tasks/{id}
+PATCH  /tasks/{id}/status
+GET    /tasks/{id}/status-history
+PATCH  /tasks/{id}/assign
+DELETE /tasks/{id}
+```
+
+Comments:
+
+```text
+POST /tasks/{id}/comments
+GET  /tasks/{id}/comments
+```
+
+Comment request body:
+
+```json
+{
+  "comment": "Please verify the report before approval.",
+  "is_internal": false
+}
+```
+
+Approvals:
+
+```text
+POST  /approvals/
+GET   /approvals/
+PATCH /approvals/{id}/action
+GET   /approvals/{id}/history
+```
+
+Create approval request body:
+
+```json
+{
+  "title": "Approval request for monthly finance report",
+  "description": "Please review and approve the completed report.",
+  "task_id": 1
+}
+```
+
+Approval action request body:
+
+```json
+{
+  "action": "approve",
+  "comment": "Manager reviewed and approved for final admin review."
+}
+```
+
+Dashboard:
+
+```text
+GET /dashboard/analytics
+GET /dashboard/summary
+GET /dashboard/task-distribution
+```
+
+Activity:
+
+```text
+GET /activity/
+```
+
+## Setup
+
+Create and activate virtual environment:
 
 ```bash
 python -m venv venv
-```
-
-Activate environment:
-
-### Windows
-
-```bash
 venv\Scripts\activate
 ```
 
----
-
-## 3. Install Dependencies
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+Update the database URL in `.env` or `alembic.ini` based on the local MySQL setup.
 
-# Configure Database
-
-Create MySQL database:
-
-```sql
-CREATE DATABASE workflow_db;
-```
-
----
-
-# Configure Database URL
-
-Update database URL inside:
-
-```bash
-alembic.ini
-```
-
-Example:
-
-```ini
-sqlalchemy.url = mysql+pymysql://root:password@localhost:3306/workflow_db
-```
-
----
-
-# Run Alembic Migration
+Run migrations:
 
 ```bash
 alembic upgrade head
 ```
 
----
-
-# Start Backend Server
+Start the backend:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
----
+Swagger UI:
 
-# Swagger Documentation
-
-Open:
-
-```bash
+```text
 http://127.0.0.1:8000/docs
 ```
 
----
+## Verification Notes
 
-# Security Features
+Before submission, test the Phase 2 flow through Swagger:
 
-- JWT Authentication
-- Password Hashing
-- Protected Routes
-- RBAC Authorization
-- Input Validation
-
----
+- Move a task from `todo` to `in_progress` to `review`
+- Confirm invalid status jumps are blocked
+- Check `/tasks/{id}/status-history`
+- Add public and internal comments
+- Confirm employees cannot create or view internal notes
+- Approve as Manager, then approve as Admin
+- Confirm rejection without comment is blocked
+- Check `/approvals/{id}/history`
+- Check `/dashboard/summary` and `/dashboard/task-distribution`

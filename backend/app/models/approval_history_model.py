@@ -1,0 +1,66 @@
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    DateTime,
+    Text
+)
+
+from sqlalchemy.sql import func
+
+from app.db.database import Base
+
+
+class ApprovalHistory(Base):
+
+    __tablename__ = "approval_history"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    approval_id = Column(
+        Integer,
+        ForeignKey("approvals.id"),
+        nullable=False
+    )
+
+    action_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    action = Column(
+        String(50),
+        nullable=True
+    )
+
+    old_status = Column(
+        String(50),
+        nullable=True
+    )
+
+    new_status = Column(
+        String(50),
+        nullable=True
+    )
+
+    changed_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    comment = Column(
+        Text,
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )

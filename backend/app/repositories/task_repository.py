@@ -4,11 +4,36 @@ from app.models.task_model import Task
 
 
 def create_task(
+
     db: Session,
-    task_data: dict
+
+    task_data,
+
+    created_by: int
 ):
 
-    task = Task(**task_data)
+    task = Task(
+
+        title=task_data.title,
+
+        description=
+        task_data.description,
+
+        priority=
+        task_data.priority,
+
+        status="todo",
+
+        due_date=
+        task_data.due_date,
+
+        assigned_to=
+        task_data.assigned_to,
+
+        created_by=created_by,
+
+        updated_by=created_by
+    )
 
     db.add(task)
 
@@ -26,27 +51,10 @@ def get_all_tasks(
     return db.query(Task).all()
 
 
-def get_tasks_by_user(
-    db: Session,
-    user_id: int
-):
-
-    return db.query(Task).filter(
-        Task.assigned_to == user_id
-    ).all()
-
-def get_tasks_created_by_user(
-    db: Session,
-    user_id: int
-):
-
-    return db.query(Task).filter(
-        Task.created_by == user_id
-    ).all()
-
-
 def get_task_by_id(
+
     db: Session,
+
     task_id: int
 ):
 
@@ -55,29 +63,40 @@ def get_task_by_id(
     ).first()
 
 
-def update_task_status(
-    db: Session,
-    task,
-    status: str
-):
-
-    task.status = status
-
-    db.commit()
-
-    db.refresh(task)
-
-    return task
-
 def update_task(
+
     db: Session,
-    task,
-    update_data: dict
+
+    task: Task,
+
+    task_data,
+
+    updated_by: int
 ):
 
-    for key, value in update_data.items():
+    task.title = (
+        task_data.title
+    )
 
-        setattr(task, key, value)
+    task.description = (
+        task_data.description
+    )
+
+    task.priority = (
+        task_data.priority
+    )
+
+    task.due_date = (
+        task_data.due_date
+    )
+
+    task.assigned_to = (
+        task_data.assigned_to
+    )
+
+    task.updated_by = (
+        updated_by
+    )
 
     db.commit()
 
@@ -87,8 +106,10 @@ def update_task(
 
 
 def delete_task(
+
     db: Session,
-    task
+
+    task: Task
 ):
 
     db.delete(task)

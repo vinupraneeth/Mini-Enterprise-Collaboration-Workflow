@@ -2,14 +2,14 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Text,
+    ForeignKey,
     DateTime,
-    ForeignKey
+    Text
 )
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
-from datetime import datetime, UTC
+from sqlalchemy.orm import relationship
 
 from app.db.database import Base
 
@@ -17,7 +17,6 @@ from app.db.database import Base
 class Task(Base):
 
     __tablename__ = "tasks"
-
 
     id = Column(
         Integer,
@@ -52,7 +51,8 @@ class Task(Base):
 
     assigned_to = Column(
         Integer,
-        ForeignKey("users.id")
+        ForeignKey("users.id"),
+        nullable=True
     )
 
     created_by = Column(
@@ -60,30 +60,37 @@ class Task(Base):
         ForeignKey("users.id")
     )
 
+    updated_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
     created_at = Column(
-        DateTime,
-        default=lambda:
-            datetime.now(UTC)
+        DateTime(timezone=True),
+        server_default=func.now()
     )
 
     updated_at = Column(
-        DateTime,
-        default=lambda:
-            datetime.now(UTC),
-
-        onupdate=lambda:
-            datetime.now(UTC)
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )
 
-
-    assigned_user = relationship(
+    assignee = relationship(
         "User",
         foreign_keys=[assigned_to],
-        back_populates="assigned_tasks"
+        overlaps="assigned_tasks"
     )
 
-    creator_user = relationship(
+    creator = relationship(
         "User",
         foreign_keys=[created_by],
-        back_populates="created_tasks"
+        overlaps="created_tasks"
+    )
+
+    updater = relationship(
+        "User",
+        foreign_keys=[updated_by],
+        overlaps="updated_tasks"
     )

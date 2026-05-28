@@ -2,219 +2,186 @@
 
 ## Overview
 
-Mini Enterprise Workflow Management System is a full-stack enterprise task management application developed using FastAPI, React, MySQL, and Tailwind CSS.
+Mini Enterprise Workflow Management System is a full-stack workflow application built with FastAPI, React, MySQL, and Tailwind CSS.
 
-The system provides secure role-based workflow management where Admins, Managers, and Employees have different levels of access and responsibilities.
+The application supports secure role-based task management for Admin, Manager, and Employee users. Phase 2 extends the basic task system with Kanban workflow tracking, comments, approvals, activity/history records, and dashboard analytics.
 
----
+## Tech Stack
 
-# Tech Stack
-
-## Backend
+Backend:
 - FastAPI
 - SQLAlchemy
 - MySQL
 - Alembic
-- JWT Authentication
+- JWT authentication
 - Pydantic
+- Passlib / bcrypt
 
-## Frontend
+Frontend:
 - React
 - Vite
 - Tailwind CSS
 - Axios
 - React Router DOM
+- @hello-pangea/dnd
 
----
+## Main Features
 
-# Features
+Authentication:
+- User registration with role
+- Login with JWT token
+- Current logged-in user API
+- Protected frontend routes
 
-## Authentication
-- User Registration
-- User Login
-- JWT Authentication
-- Protected Routes
+Role-based access:
+- Admin can manage all users, tasks, approvals, and workflow data
+- Manager can create tasks, assign tasks to employees, and manage related workflow approvals
+- Employee can view assigned tasks, update task status through the allowed workflow, add public comments, and submit approval requests
 
----
+Task management:
+- Create, view, edit, delete, and assign tasks
+- Role-based task filtering
+- Priority and due date support
+- MySQL persistence with Alembic migrations
 
-# Role-Based Access Control
+Phase 2 workflow:
+- Kanban stages: `todo -> in_progress -> review -> done`
+- Backend validation for invalid status transitions
+- Task status history tracking
+- Public comments and restricted internal notes
+- Approval workflow with Manager review and Admin final approval
+- Approval actions: `approve`, `reject`, and `hold`
+- Mandatory comment for rejection
+- Approval audit history
+- Dashboard summary and task distribution APIs
 
-## Admin
-- Full system access
-- Manage all tasks
-- Assign tasks
-- Edit/Delete tasks
+## Important APIs
 
-## Manager
-- Create tasks
-- Assign tasks to employees
-- Manage own created tasks
-
-## Employee
-- View assigned tasks
-- Update task status
-
----
-
-# Task Management
-
-- Create Task
-- Edit Task
-- Delete Task
-- Assign Task
-- Update Task Status
-- View Single Task
-- View All Tasks
-
----
-
-# Architecture
-
-Backend follows enterprise layered architecture:
+Authentication:
 
 ```text
-Router → Service → Repository → Database
+POST /auth/register
+POST /auth/login
+GET  /auth/me
 ```
 
----
+Users:
 
-# Database
+```text
+GET /users/
+GET /users/employees
+GET /users/{id}
+```
 
-- MySQL Database
-- SQLAlchemy ORM
-- Alembic Migrations
+Tasks:
 
----
+```text
+POST   /tasks/
+GET    /tasks/
+GET    /tasks/kanban
+GET    /tasks/{id}
+PUT    /tasks/{id}
+PATCH  /tasks/{id}/status
+GET    /tasks/{id}/status-history
+PATCH  /tasks/{id}/assign
+DELETE /tasks/{id}
+```
 
-# Frontend Features
+Comments:
 
-- Responsive Dashboard
-- Task Statistics Cards
-- Edit Task Modal
-- Modern Tailwind UI
-- Protected Frontend Routing
-- Empty State UI
+```text
+POST /tasks/{id}/comments
+GET  /tasks/{id}/comments
+```
 
----
+Approvals:
 
-# Project Structure
+```text
+POST  /approvals/
+GET   /approvals/
+PATCH /approvals/{id}/action
+GET   /approvals/{id}/history
+```
 
-```bash
+Dashboard:
+
+```text
+GET /dashboard/analytics
+GET /dashboard/summary
+GET /dashboard/task-distribution
+```
+
+Activity:
+
+```text
+GET /activity/
+```
+
+## Project Structure
+
+```text
 mini-enterprise-workflow/
-│
-├── backend/
-│   ├── alembic/
-│   ├── app/
-│   ├── requirements.txt
-│   └── README.md
-│
-├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── README.md
-│
-└── README.md
+|-- backend/
+|   |-- alembic/
+|   |-- app/
+|   |-- requirements.txt
+|   `-- README.md
+|-- frontend/
+|   |-- src/
+|   |-- package.json
+|   `-- README.md
+|-- Screenshots/
+`-- README.md
 ```
 
----
+## Setup Instructions
 
-# Setup Instructions
-
-## Backend Setup
+Backend:
 
 ```bash
 cd backend
-```
-
-Create virtual environment:
-
-```bash
 python -m venv venv
-```
-
-Activate environment:
-
-### Windows
-
-```bash
 venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
-```
-
-Run migrations:
-
-```bash
 alembic upgrade head
-```
-
-Start backend:
-
-```bash
 uvicorn app.main:app --reload
 ```
 
 Backend URL:
 
-```bash
+```text
 http://127.0.0.1:8000
 ```
 
 Swagger Docs:
 
-```bash
+```text
 http://127.0.0.1:8000/docs
 ```
 
----
-
-# Frontend Setup
+Frontend:
 
 ```bash
 cd frontend
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-Start frontend:
-
-```bash
 npm run dev
 ```
 
 Frontend URL:
 
-```bash
+```text
 http://localhost:5173
 ```
 
----
+## Submission Notes
 
-# Security Features
+The `Screenshots` folder contains proof for Swagger/API testing, frontend screens, and MySQL verification. Phase 2 screenshots cover Kanban workflow, status history, comments, approvals, approval history, dashboard APIs, and database records.
 
-- JWT Authentication
-- Password Hashing
-- RBAC Authorization
-- Protected APIs
-- Input Validation
+## Future Improvements
 
----
-
-# Future Improvements
-
-- Search & Filtering
+- Search and filtering
 - Pagination
 - Notifications
-- Docker Deployment
-- Unit Testing
-- Email Notifications
-
----
+- Docker deployment
+- Automated test coverage
+- Email notifications

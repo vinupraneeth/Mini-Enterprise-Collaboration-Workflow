@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 
-from typing import Optional
-
 from datetime import datetime
 
 
@@ -9,11 +7,11 @@ class TaskCreate(BaseModel):
 
     title: str
 
-    description: Optional[str] = None
+    description: str
 
-    priority: str = "medium"
+    priority: str
 
-    due_date: Optional[datetime] = None
+    due_date: datetime | None = None
 
     assigned_to: int
 
@@ -22,13 +20,11 @@ class TaskUpdate(BaseModel):
 
     title: str
 
-    description: Optional[str] = None
+    description: str
 
     priority: str
 
-    status: str
-
-    due_date: Optional[datetime] = None
+    due_date: datetime | None = None
 
     assigned_to: int
 
@@ -37,11 +33,9 @@ class TaskStatusUpdate(BaseModel):
 
     status: str
 
-
 class TaskAssign(BaseModel):
 
     assigned_to: int
-
 
 class TaskResponse(BaseModel):
 
@@ -49,18 +43,37 @@ class TaskResponse(BaseModel):
 
     title: str
 
-    description: Optional[str]
+    description: str
 
     status: str
 
     priority: str
 
-    due_date: Optional[datetime]
+    due_date: datetime | None = None
 
     assigned_to: int
 
     created_by: int
 
+    created_at: datetime | None = None
+
+    approval_status: str | None = None
+
+    approval_remarks: str | None = None
+
     class Config:
 
+        from_attributes = True
+
+
+class TaskHistoryResponse(BaseModel):
+
+    id: int
+    task_id: int
+    old_status: str
+    new_status: str
+    changed_by: int
+    created_at: datetime
+
+    class Config:
         from_attributes = True

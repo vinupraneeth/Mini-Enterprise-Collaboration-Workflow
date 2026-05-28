@@ -26,6 +26,21 @@ def register_user(
     user: UserCreate
 ):
 
+    valid_roles = [
+        "admin",
+        "manager",
+        "employee"
+    ]
+
+    user_role = user.role.lower()
+
+    if user_role not in valid_roles:
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user role"
+        )
+
     existing_user = get_user_by_email(
         db,
         user.email
@@ -45,6 +60,8 @@ def register_user(
     user_data.pop("password")
 
     user_data["hashed_password"] = hashed_pw
+
+    user_data["role"] = user_role
 
     return create_user(
         db,
@@ -88,6 +105,12 @@ def login_user(
     )
 
     return {
+
         "access_token": access_token,
-        "token_type": "bearer"
+
+        "token_type": "bearer",
+
+        "name": user.name,
+
+        "role": user.role
     }

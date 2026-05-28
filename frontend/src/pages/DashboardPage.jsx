@@ -1,301 +1,233 @@
-import {
-  useEffect,
-  useState
-} from "react";
+import { useEffect, useState } from "react"
 
-import {
-  useNavigate
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom"
 
-import api from "../api/axios";
+import axios from "axios"
 
-import Navbar from "../components/Navbar";
+import Navbar from "../components/Navbar"
 
-import CreateTaskForm from "../components/CreateTaskForm";
+import TaskStatsCards from "../components/TaskStatsCards"
 
-import EditTaskModal from "../components/EditTaskModal";
+import CreateTaskForm from "../components/CreateTaskForm"
 
-import TaskStatsCards from "../components/TaskStatsCards";
+import EditTaskModal from "../components/EditTaskModal"
 
-import EmptyState from "../components/EmptyState";
+import KanbanBoard from "../components/KanbanBoard"
+
+import DashboardAnalytics from "../components/DashboardAnalytics"
 
 
-function DashboardPage() {
+export default function DashboardPage() {
 
-  const [user, setUser] =
-    useState(null);
+  const navigate = useNavigate()
 
-  const [tasks, setTasks] =
-    useState([]);
+  const [tasks, setTasks] = useState([])
 
-  const [statusMap, setStatusMap] =
-    useState({});
+  const [loading, setLoading] =
+    useState(true)
+
+  const [isModalOpen, setIsModalOpen] =
+    useState(false)
 
   const [editingTask, setEditingTask] =
-    useState(null);
+    useState(null)
 
-  const [stats, setStats] =
-    useState({
+  const token =
+    localStorage.getItem("token")
 
-      total: 0,
+  const storedUser =
+    localStorage.getItem("user")
 
-      todo: 0,
-
-      inProgress: 0,
-
-      done: 0
-    });
-
-  const navigate = useNavigate();
-
-
-  useEffect(() => {
-
-    fetchCurrentUser();
-
-    fetchTasks();
-
-  }, []);
-
-
-  const fetchCurrentUser = async () => {
-
-    try {
-
-      const token = localStorage.getItem(
-        "token"
-      );
-
-      const response = await api.get(
-
-        "/auth/me",
-
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
-          }
-        }
-      );
-
-      setUser(response.data);
-
-    } catch (error) {
-
-      console.log(error);
-    }
-  };
+  const user = storedUser
+    ? JSON.parse(storedUser)
+    : null
 
 
   const fetchTasks = async () => {
 
     try {
 
-      const token = localStorage.getItem(
-        "token"
-      );
+      const response =
+        await axios.get(
 
-      const response = await api.get(
+          "http://127.0.0.1:8000/tasks/",
 
-        "/tasks",
-
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
           }
-        }
-      );
+        )
 
-      setTasks(response.data);
-
-      calculateStats(
-        response.data
-      );
+      setTasks(response.data)
 
     } catch (error) {
 
-      console.log(error);
+      console.error(error)
+
+    } finally {
+
+      setLoading(false)
     }
-  };
+  }
 
 
-  const calculateStats = (
-    taskData
-  ) => {
+  useEffect(() => {
 
-    const total =
-      taskData.length;
+    if (!token) {
 
-    const todo =
-      taskData.filter(
-        (task) =>
-          task.status === "todo"
-      ).length;
+      navigate("/")
 
-    const inProgress =
-      taskData.filter(
-        (task) =>
-          task.status ===
-          "in_progress"
-      ).length;
-
-    const done =
-      taskData.filter(
-        (task) =>
-          task.status === "done"
-      ).length;
-
-    setStats({
-
-      total,
-
-      todo,
-
-      inProgress,
-
-      done
-    });
-  };
-
-
-  const handleStatusChange = (
-    taskId,
-    value
-  ) => {
-
-    setStatusMap({
-
-      ...statusMap,
-
-      [taskId]: value
-    });
-  };
-
-
-  const updateTaskStatus = async (
-    taskId
-  ) => {
-
-    try {
-
-      const token = localStorage.getItem(
-        "token"
-      );
-
-      await api.patch(
-
-        `/tasks/${taskId}/status`,
-
-        {
-          status:
-            statusMap[taskId]
-        },
-
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
-          }
-        }
-      );
-
-      fetchTasks();
-
-    } catch (error) {
-
-      console.log(error);
-    }
-  };
-
-
-  const deleteTask = async (
-    taskId
-  ) => {
-
-    const confirmDelete =
-      window.confirm(
-        "Delete this task?"
-      );
-
-    if (!confirmDelete) {
-
-      return;
+      return
     }
 
-    try {
+    fetchTasks()
 
-      const token = localStorage.getItem(
-        "token"
-      );
-
-      await api.delete(
-
-        `/tasks/${taskId}`,
-
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
-          }
-        }
-      );
-
-      fetchTasks();
-
-    } catch (error) {
-
-      console.log(error);
-    }
-  };
+  }, [])
 
 
   const handleLogout = () => {
 
-    localStorage.removeItem(
-      "token"
-    );
+    localStorage.removeItem("token")
 
-    navigate("/");
-  };
+    localStorage.removeItem("user")
+
+    navigate("/")
+  }
 
 
-  const getStatusColor = (
-    status
-  ) => {
+  const handleDelete =
+    async (taskId) => {
 
-    if (status === "done") {
+      const confirmDelete =
+        window.confirm(
+          "Delete this task?"
+        )
 
-      return "bg-green-100 text-green-700";
+      if (!confirmDelete) return
+
+      try {
+
+        await axios.delete(
+
+          `http://127.0.0.1:8000/tasks/${taskId}`,
+
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        )
+
+        setTasks((prevTasks) =>
+
+          prevTasks.filter(
+            (task) =>
+              task.id !== taskId
+          )
+        )
+
+      } catch (error) {
+
+        console.error(error)
+
+        alert(
+          error.response?.data?.detail ||
+          "Delete failed"
+        )
+      }
     }
 
-    if (
-      status === "in_progress"
-    ) {
 
-      return "bg-yellow-100 text-yellow-700";
+  const handleEdit = (task) => {
+
+    setEditingTask(task)
+
+    setIsModalOpen(true)
+  }
+
+
+  const handleCreate = () => {
+
+    setEditingTask(null)
+
+    setIsModalOpen(true)
+  }
+
+
+  const handleStatusChange =
+    async (taskId, status) => {
+
+      try {
+
+        await axios.patch(
+
+          `http://127.0.0.1:8000/tasks/${taskId}/status`,
+
+          {
+            status
+          },
+
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        )
+
+        setTasks((prevTasks) =>
+
+          prevTasks.map((task) =>
+
+            task.id === taskId
+              ? {
+                  ...task,
+                  status
+                }
+              : task
+          )
+        )
+
+      } catch (error) {
+
+        console.error(error)
+
+        alert(
+          error.response?.data?.detail ||
+          "Status update failed"
+        )
+      }
     }
 
-    return "bg-gray-200 text-gray-700";
-  };
 
+  const stats = {
 
-  const getPriorityColor = (
-    priority
-  ) => {
+    total: tasks.length,
 
-    if (priority === "high") {
+    todo: tasks.filter(
+      (task) =>
+        task.status === "todo"
+    ).length,
 
-      return "bg-red-100 text-red-700";
-    }
+    inProgress: tasks.filter(
+      (task) =>
+        task.status ===
+        "in_progress"
+    ).length,
 
-    if (priority === "medium") {
+    review: tasks.filter(
+      (task) =>
+        task.status === "review"
+    ).length,
 
-      return "bg-blue-100 text-blue-700";
-    }
-
-    return "bg-green-100 text-green-700";
-  };
+    done: tasks.filter(
+      (task) =>
+        task.status === "done"
+    ).length
+  }
 
 
   return (
@@ -307,243 +239,115 @@ function DashboardPage() {
         handleLogout={handleLogout}
       />
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+
+          <div>
+
+            <h1 className="text-3xl font-bold text-gray-800">
+
+              Workflow Dashboard
+
+            </h1>
+
+            <p className="text-gray-500 mt-1">
+
+              Manage enterprise workflow tasks
+
+            </p>
+
+          </div>
+
+          {(user?.role === "admin" ||
+            user?.role === "manager") && (
+
+            <button
+              onClick={handleCreate}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition"
+            >
+
+              + Create Task
+
+            </button>
+          )}
+        </div>
 
         <TaskStatsCards
           stats={stats}
         />
+        <DashboardAnalytics
+          stats={stats}
+        />
 
-        {
-          user &&
-          (
-            user.role === "admin"
-            ||
-            user.role === "manager"
-          )
-          &&
-          (
-            <CreateTaskForm
-              fetchTasks={fetchTasks}
-              currentUser={user}
-            />
-          )
-        }
+        <div className="mt-10">
 
-        {
-          tasks.length === 0
+          {loading ? (
 
-          ?
+            <div className="text-center py-20 text-gray-500">
 
-          (
-
-            <EmptyState />
-
-          )
-
-          :
-
-          (
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
-
-              {
-                tasks.map((task) => (
-
-                  <div
-                    key={task.id}
-                    className="bg-white rounded-3xl shadow-lg p-7 hover:shadow-2xl hover:-translate-y-1 transition duration-300 border border-gray-100"
-                  >
-
-                    <div className="flex justify-between items-start gap-4">
-
-                      <div>
-
-                        <h2 className="text-2xl font-bold text-gray-800">
-                          {task.title}
-                        </h2>
-
-                        <p className="text-gray-500 mt-3 leading-7">
-                          {
-                            task.description
-                            ||
-                            "No description provided"
-                          }
-                        </p>
-
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-
-                        <span
-                          className={`px-4 py-1 rounded-full text-sm font-semibold text-center ${getStatusColor(task.status)}`}
-                        >
-                          {task.status}
-                        </span>
-
-                        <span
-                          className={`px-4 py-1 rounded-full text-sm font-semibold text-center capitalize ${getPriorityColor(task.priority)}`}
-                        >
-                          {task.priority}
-                        </span>
-
-                      </div>
-
-                    </div>
-
-                    <div className="mt-7 grid grid-cols-2 gap-6">
-
-                      <div className="bg-gray-50 rounded-2xl p-4">
-
-                        <p className="text-gray-400 text-sm">
-                          Due Date
-                        </p>
-
-                        <p className="font-semibold text-gray-800 mt-2">
-
-                          {
-                            task.due_date
-                            ?
-                            new Date(
-                              task.due_date
-                            ).toLocaleDateString()
-                            :
-                            "N/A"
-                          }
-
-                        </p>
-
-                      </div>
-
-                      <div className="bg-gray-50 rounded-2xl p-4">
-
-                        <p className="text-gray-400 text-sm">
-                          Task ID
-                        </p>
-
-                        <p className="font-semibold text-gray-800 mt-2">
-                          #{task.id}
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                    <div className="mt-7 flex flex-wrap gap-3">
-
-                      <select
-
-                        value={
-                          statusMap[task.id]
-                          || task.status
-                        }
-
-                        onChange={(e) =>
-                          handleStatusChange(
-                            task.id,
-                            e.target.value
-                          )
-                        }
-
-                        className="border border-gray-300 rounded-xl px-4 py-3 bg-white"
-                      >
-
-                        <option value="todo">
-                          Todo
-                        </option>
-
-                        <option value="in_progress">
-                          In Progress
-                        </option>
-
-                        <option value="done">
-                          Done
-                        </option>
-
-                      </select>
-
-                      <button
-
-                        onClick={() =>
-                          updateTaskStatus(
-                            task.id
-                          )
-                        }
-
-                        className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-3 rounded-xl transition shadow-md"
-                      >
-                        Update
-                      </button>
-
-                      {
-                        (
-                          user.role === "admin"
-                          ||
-                          user.role ===
-                          "manager"
-                        )
-                        &&
-                        (
-                          <>
-
-                            <button
-
-                              onClick={() =>
-                                setEditingTask(task)
-                              }
-
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl transition shadow-md"
-                            >
-                              Edit
-                            </button>
-
-                            <button
-
-                              onClick={() =>
-                                deleteTask(
-                                  task.id
-                                )
-                              }
-
-                              className="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-xl transition shadow-md"
-                            >
-                              Delete
-                            </button>
-
-                          </>
-                        )
-                      }
-
-                    </div>
-
-                  </div>
-                ))
-              }
+              Loading tasks...
 
             </div>
-          )
-        }
 
+          ) : (
+
+            <KanbanBoard
+
+              tasks={tasks}
+
+              onEdit={handleEdit}
+
+              onDelete={handleDelete}
+
+              onStatusChange={
+                handleStatusChange
+              }
+            />
+          )}
+        </div>
       </div>
 
-      {
-        editingTask && (
+      {isModalOpen && !editingTask && (
 
-          <EditTaskModal
+        <CreateTaskForm
 
-            task={editingTask}
+          closeModal={() =>
+            setIsModalOpen(false)
+          }
 
-            closeModal={() =>
-              setEditingTask(null)
-            }
+          fetchTasks={() => {
 
-            fetchTasks={fetchTasks}
+            fetchTasks()
 
-          />
-        )
-      }
+            setIsModalOpen(false)
+          }}
+        />
+      )}
 
+      {isModalOpen && editingTask && (
+
+        <EditTaskModal
+
+          task={editingTask}
+
+          closeModal={() => {
+
+            setIsModalOpen(false)
+
+            setEditingTask(null)
+          }}
+
+          fetchTasks={() => {
+
+            fetchTasks()
+
+            setIsModalOpen(false)
+
+            setEditingTask(null)
+          }}
+        />
+      )}
     </div>
-  );
+  )
 }
-
-export default DashboardPage;
