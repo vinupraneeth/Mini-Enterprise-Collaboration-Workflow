@@ -1,21 +1,32 @@
-# Mini Enterprise Workflow Management System
+# Mini Enterprise Collaboration Workflow
 
-## Overview
+A full-stack workflow management application built with FastAPI, React, MySQL, and Tailwind CSS.
 
-Mini Enterprise Workflow Management System is a full-stack workflow application built with FastAPI, React, MySQL, and Tailwind CSS.
+The project started as a role-based task management system and was extended with workflow features such as Kanban tracking, comments, approval reviews, task history, and dashboard summaries.
 
-The application supports secure role-based task management for Admin, Manager, and Employee users. Phase 2 extends the basic task system with Kanban workflow tracking, comments, approvals, activity/history records, and dashboard analytics.
+## Features
+
+- User registration and login with JWT authentication
+- Role-based access for Admin, Manager, and Employee users
+- Task creation, assignment, editing, deletion, and role-based task visibility
+- Kanban workflow with the stages `todo`, `in_progress`, `review`, and `done`
+- Backend validation to prevent invalid workflow transitions
+- Task status history
+- Public comments and internal notes on tasks
+- Approval workflow with Manager review and Admin final approval
+- Approval history with action, user, comment, and timestamp
+- Dashboard summary and task distribution APIs
+- React frontend connected with the FastAPI backend
 
 ## Tech Stack
 
 Backend:
 - FastAPI
 - SQLAlchemy
-- MySQL
-- Alembic
-- JWT authentication
 - Pydantic
-- Passlib / bcrypt
+- Alembic
+- MySQL
+- JWT authentication
 
 Frontend:
 - React
@@ -24,98 +35,6 @@ Frontend:
 - Axios
 - React Router DOM
 - @hello-pangea/dnd
-
-## Main Features
-
-Authentication:
-- User registration with role
-- Login with JWT token
-- Current logged-in user API
-- Protected frontend routes
-
-Role-based access:
-- Admin can manage all users, tasks, approvals, and workflow data
-- Manager can create tasks, assign tasks to employees, and manage related workflow approvals
-- Employee can view assigned tasks, update task status through the allowed workflow, add public comments, and submit approval requests
-
-Task management:
-- Create, view, edit, delete, and assign tasks
-- Role-based task filtering
-- Priority and due date support
-- MySQL persistence with Alembic migrations
-
-Phase 2 workflow:
-- Kanban stages: `todo -> in_progress -> review -> done`
-- Backend validation for invalid status transitions
-- Task status history tracking
-- Public comments and restricted internal notes
-- Approval workflow with Manager review and Admin final approval
-- Approval actions: `approve`, `reject`, and `hold`
-- Mandatory comment for rejection
-- Approval audit history
-- Dashboard summary and task distribution APIs
-
-## Important APIs
-
-Authentication:
-
-```text
-POST /auth/register
-POST /auth/login
-GET  /auth/me
-```
-
-Users:
-
-```text
-GET /users/
-GET /users/employees
-GET /users/{id}
-```
-
-Tasks:
-
-```text
-POST   /tasks/
-GET    /tasks/
-GET    /tasks/kanban
-GET    /tasks/{id}
-PUT    /tasks/{id}
-PATCH  /tasks/{id}/status
-GET    /tasks/{id}/status-history
-PATCH  /tasks/{id}/assign
-DELETE /tasks/{id}
-```
-
-Comments:
-
-```text
-POST /tasks/{id}/comments
-GET  /tasks/{id}/comments
-```
-
-Approvals:
-
-```text
-POST  /approvals/
-GET   /approvals/
-PATCH /approvals/{id}/action
-GET   /approvals/{id}/history
-```
-
-Dashboard:
-
-```text
-GET /dashboard/analytics
-GET /dashboard/summary
-GET /dashboard/task-distribution
-```
-
-Activity:
-
-```text
-GET /activity/
-```
 
 ## Project Structure
 
@@ -134,32 +53,35 @@ mini-enterprise-workflow/
 `-- README.md
 ```
 
-## Setup Instructions
-
-Backend:
+## Backend Setup
 
 ```bash
 cd backend
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+Create a `.env` file in the `backend` folder. A sample is available at:
+
+```text
+backend/.env.example
+```
+
+Run migrations and start the API:
+
+```bash
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Backend URL:
-
-```text
-http://127.0.0.1:8000
-```
-
-Swagger Docs:
+Swagger UI:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-Frontend:
+## Frontend Setup
 
 ```bash
 cd frontend
@@ -173,15 +95,27 @@ Frontend URL:
 http://localhost:5173
 ```
 
-## Submission Notes
+## Main API Groups
 
-The `Screenshots` folder contains proof for Swagger/API testing, frontend screens, and MySQL verification. Phase 2 screenshots cover Kanban workflow, status history, comments, approvals, approval history, dashboard APIs, and database records.
+- Auth: `/auth/register`, `/auth/login`, `/auth/me`
+- Users: `/users/`, `/users/employees`, `/users/{id}`
+- Tasks: `/tasks/`, `/tasks/kanban`, `/tasks/{id}/status`, `/tasks/{id}/status-history`
+- Comments: `/tasks/{id}/comments`
+- Approvals: `/approvals/`, `/approvals/{id}/action`, `/approvals/{id}/history`
+- Dashboard: `/dashboard/summary`, `/dashboard/task-distribution`, `/dashboard/analytics`
 
-## Future Improvements
+## Screenshots
 
-- Search and filtering
-- Pagination
-- Notifications
-- Docker deployment
-- Automated test coverage
-- Email notifications
+The `Screenshots` folder is organized by phase and includes backend Swagger tests, frontend screens, and MySQL verification screenshots.
+
+```text
+Screenshots/
+|-- Phase 1 Screenshots/
+`-- Phase 2 Screenshots/
+```
+
+## Notes
+
+- The `.env` file is not committed.
+- Use `backend/.env.example` as the reference for required environment variables.
+- Run `npm run build` inside `frontend` to verify the React build.

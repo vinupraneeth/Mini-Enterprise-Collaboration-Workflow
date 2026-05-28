@@ -1,8 +1,8 @@
-# Mini Enterprise Workflow Management System - Backend
+# Backend - Mini Enterprise Collaboration Workflow
 
-This is the FastAPI backend for the Mini Enterprise Workflow project. It handles authentication, role-based task management, Kanban workflow validation, task comments, approval reviews, status history, and dashboard data.
+This folder contains the FastAPI backend for the workflow application. It handles authentication, role-based access, task management, Kanban workflow rules, comments, approvals, and dashboard data.
 
-The backend follows a simple layered structure:
+The code is organized in a layered style:
 
 ```text
 Router -> Service -> Repository -> Database
@@ -13,54 +13,93 @@ Router -> Service -> Repository -> Database
 - FastAPI
 - SQLAlchemy
 - Pydantic
-- MySQL
 - Alembic
-- JWT authentication
-- Python jose
-- Passlib / bcrypt
+- MySQL
+- python-jose for JWT
+- Passlib and bcrypt for password hashing
 
-## Main Features
+## Main Modules
 
-- User registration and login
-- Password hashing
-- JWT protected APIs
-- Role-based access for Admin, Manager, and Employee
-- Task create, view, update, assign, and delete
-- Role-based task visibility
-- Kanban status flow: `todo -> in_progress -> review -> done`
-- Backend validation for invalid status transitions
-- Task status history
-- Public comments and restricted internal notes
-- Approval requests with Manager and Admin review levels
-- Approval actions: `approve`, `reject`, and `hold`
-- Mandatory comment for rejection
-- Approval history with action, actor, comment, and timestamp
-- Dashboard summary and task distribution APIs
+Authentication:
+- Register users with a role
+- Login and receive JWT token
+- Get current logged-in user
 
-## Roles
+Users:
+- Admin can view all users
+- Admin and Manager can fetch employee users for assignment
 
-Admin:
-- Can view and manage all tasks
-- Can assign tasks
-- Can view all approvals
-- Can complete final approval
-- Can view dashboard analytics
+Tasks:
+- Create, list, view, update, assign, and delete tasks
+- Admin can access all tasks
+- Managers can manage related tasks
+- Employees can view and update only assigned tasks
 
-Manager:
-- Can create tasks
-- Can assign tasks to employees
-- Can manage related tasks
-- Can review manager-level approvals for related tasks
-- Cannot review another manager's unrelated task approvals
+Workflow:
+- Supported status flow: `todo -> in_progress -> review -> done`
+- Invalid status transitions are blocked
+- Status changes are stored in task history
 
-Employee:
-- Can view assigned tasks
-- Can update assigned task status through the allowed workflow
-- Can add public comments
-- Cannot create or view internal notes
-- Cannot assign or delete tasks
+Comments:
+- Users can add comments to tasks they can access
+- Admin and Manager can add internal notes
+- Employee users can only add public comments
 
-## Important APIs
+Approvals:
+- Approval requests move through Manager and Admin review levels
+- Supported actions are `approve`, `reject`, and `hold`
+- Rejection requires a comment
+- Approval actions are saved in approval history
+- Managers can review only approvals related to their tasks
+
+Dashboard:
+- Summary counts
+- Task distribution by status
+- Basic analytics endpoint
+
+## Setup
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Create a `.env` file in the backend folder. Use `.env.example` as a guide:
+
+```text
+DATABASE_URL=mysql+pymysql://username:password@localhost:3306/workflow_db
+SECRET_KEY=replace_with_a_secure_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
+
+Run database migrations:
+
+```bash
+alembic upgrade head
+```
+
+Start the backend:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Swagger UI:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+## API Reference
 
 Authentication:
 
@@ -68,14 +107,6 @@ Authentication:
 POST /auth/register
 POST /auth/login
 GET  /auth/me
-```
-
-Users:
-
-```text
-GET /users/
-GET /users/employees
-GET /users/{id}
 ```
 
 Tasks:
@@ -99,15 +130,6 @@ POST /tasks/{id}/comments
 GET  /tasks/{id}/comments
 ```
 
-Comment request body:
-
-```json
-{
-  "comment": "Please verify the report before approval.",
-  "is_internal": false
-}
-```
-
 Approvals:
 
 ```text
@@ -117,7 +139,26 @@ PATCH /approvals/{id}/action
 GET   /approvals/{id}/history
 ```
 
-Create approval request body:
+Dashboard:
+
+```text
+GET /dashboard/summary
+GET /dashboard/task-distribution
+GET /dashboard/analytics
+```
+
+## Example Payloads
+
+Comment:
+
+```json
+{
+  "comment": "Please verify the report before approval.",
+  "is_internal": false
+}
+```
+
+Approval request:
 
 ```json
 {
@@ -127,74 +168,11 @@ Create approval request body:
 }
 ```
 
-Approval action request body:
+Approval action:
 
 ```json
 {
   "action": "approve",
-  "comment": "Manager reviewed and approved for final admin review."
+  "comment": "Reviewed and approved."
 }
 ```
-
-Dashboard:
-
-```text
-GET /dashboard/analytics
-GET /dashboard/summary
-GET /dashboard/task-distribution
-```
-
-Activity:
-
-```text
-GET /activity/
-```
-
-## Setup
-
-Create and activate virtual environment:
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Update the database URL in `.env` or `alembic.ini` based on the local MySQL setup.
-
-Run migrations:
-
-```bash
-alembic upgrade head
-```
-
-Start the backend:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Swagger UI:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-## Verification Notes
-
-Before submission, test the Phase 2 flow through Swagger:
-
-- Move a task from `todo` to `in_progress` to `review`
-- Confirm invalid status jumps are blocked
-- Check `/tasks/{id}/status-history`
-- Add public and internal comments
-- Confirm employees cannot create or view internal notes
-- Approve as Manager, then approve as Admin
-- Confirm rejection without comment is blocked
-- Check `/approvals/{id}/history`
-- Check `/dashboard/summary` and `/dashboard/task-distribution`

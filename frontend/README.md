@@ -1,6 +1,6 @@
-# Mini Enterprise Workflow Management System - Frontend
+# Frontend - Mini Enterprise Collaboration Workflow
 
-This is the React frontend for the Mini Enterprise Workflow project. It connects to the FastAPI backend and provides screens for login, registration, task dashboard, Kanban tracking, comments, and approval review.
+This folder contains the React frontend for the workflow application. It connects to the FastAPI backend and provides screens for authentication, task management, Kanban tracking, comments, dashboard summaries, and approval review.
 
 ## Tech Stack
 
@@ -9,50 +9,36 @@ This is the React frontend for the Mini Enterprise Workflow project. It connects
 - Tailwind CSS
 - Axios
 - React Router DOM
-- @hello-pangea/dnd for Kanban drag and drop
+- @hello-pangea/dnd
 
-## Main Screens
+## Screens
 
-- Login page
-- Registration page
-- Workflow dashboard
+- Login
+- Registration
+- Dashboard
 - Kanban task board
 - Create task form
 - Edit task modal
-- Task comments section
-- Approval review page
-
-## Features
-
-- JWT token stored after login
-- Protected dashboard and approval routes
-- Role-based buttons and navigation
-- Task statistics cards
-- Kanban columns for `todo`, `in_progress`, `review`, and `done`
-- Drag and drop status updates
-- Public and internal task comments
-- Employee view hides internal notes
-- Employees are blocked from creating internal notes by the backend
-- Approval actions: `approve`, `reject`, and `hold`
-- Rejection remarks prompt
+- Task comments
+- Approvals page
 
 ## Role-Based UI
 
 Admin:
-- Can create, edit, delete, and review approvals
-- Can access the approvals page
-- Can complete final approval
+- Can view and manage tasks
+- Can review approvals at the final approval level
+- Can access dashboard information
 
 Manager:
 - Can create and assign tasks
 - Can review related manager-level approvals
-- Can access the approvals page
+- Can add public comments and internal notes
 
 Employee:
 - Can view assigned tasks
-- Can update task status through the workflow
+- Can move assigned tasks through allowed workflow stages
 - Can add public comments
-- Cannot access approval review actions
+- Cannot create internal notes or review approvals
 
 ## Setup
 
@@ -62,7 +48,7 @@ Install dependencies:
 npm install
 ```
 
-Start frontend:
+Start the development server:
 
 ```bash
 npm run dev
@@ -74,26 +60,16 @@ Default URL:
 http://localhost:5173
 ```
 
-## Backend Requirement
-
-Start the backend first:
+The backend should be running at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-The frontend API calls are currently pointed to this backend URL.
-
 ## Build Check
-
-To check the frontend before submission:
 
 ```bash
 npm run build
 ```
 
-If the build passes and the backend is running, the main workflow can be tested from the browser.
-
-## Submission Screens
-
-For Phase 2 proof, capture the dashboard/Kanban board, comments UI, and approval review page. Swagger screenshots are used for the deeper approval history and role-restriction checks.
+The frontend stores the JWT token in local storage after login and uses it for authenticated API requests.
