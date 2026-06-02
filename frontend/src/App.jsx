@@ -14,6 +14,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 import ApprovalsPage from "./pages/ApprovalsPage"
 
+import AuditLogsPage from "./pages/AuditLogsPage"
+
 
 function App() {
 
@@ -52,6 +54,19 @@ function App() {
             <ProtectedRoute>
 
               <ApprovalsPage />
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+
+          path="/audit-logs"
+
+          element={
+            <ProtectedRoute>
+
+              <AuditLogsPage />
 
             </ProtectedRoute>
           }

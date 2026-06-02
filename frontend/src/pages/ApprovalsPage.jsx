@@ -45,6 +45,7 @@ export default function ApprovalsPage() {
           )
 
         setApprovals(
+          response.data.items ||
           response.data
         )
 
@@ -56,6 +57,13 @@ export default function ApprovalsPage() {
 
 
   useEffect(() => {
+
+    if (
+      user?.role === "employee"
+    ) {
+
+      return
+    }
 
     fetchApprovals()
 
@@ -71,7 +79,9 @@ export default function ApprovalsPage() {
       try {
 
         let remarks =
-          "Approved by manager"
+          user?.role === "admin"
+            ? "Approved by admin"
+            : "Approved by manager"
 
         if (
           status === "rejected"
@@ -145,7 +155,7 @@ export default function ApprovalsPage() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-teal-100">
+    <div className="min-h-screen bg-slate-100">
 
       <Navbar
         user={user}
@@ -159,13 +169,41 @@ export default function ApprovalsPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-10">
 
-        <div className="mb-8">
+        {user?.role === "employee" ? (
 
-          <h1 className="text-3xl font-bold text-gray-800">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 text-center">
+
+            <h1 className="text-2xl font-bold text-slate-900">
+
+              Approvals are not available for employees
+
+            </h1>
+
+            <p className="text-slate-500 mt-2">
+
+              Employees can submit work for review from their assigned tasks.
+
+            </p>
+
+          </div>
+
+        ) : (
+
+          <>
+
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-6 py-5 mb-8">
+
+          <h1 className="text-3xl font-bold text-slate-900">
 
             Pending Approvals
 
           </h1>
+
+          <p className="text-slate-500 mt-1">
+
+            Review submitted workflow requests
+
+          </p>
 
         </div>
 
@@ -178,14 +216,14 @@ export default function ApprovalsPage() {
 
                 <div
                   key={approval.id}
-                  className="bg-white rounded-2xl shadow-lg p-6"
+                  className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6"
                 >
 
                   <div className="flex justify-between items-start gap-6">
 
                     <div>
 
-                      <h2 className="text-xl font-bold text-gray-800">
+                      <h2 className="text-xl font-bold text-slate-900">
 
                         Approval Request
                         {" "}
@@ -193,7 +231,7 @@ export default function ApprovalsPage() {
 
                       </h2>
 
-                      <p className="text-gray-600 mt-2">
+                      <p className="text-slate-600 mt-2">
 
                         Task ID:
                         {" "}
@@ -203,7 +241,7 @@ export default function ApprovalsPage() {
 
                       <div className="mt-4 flex flex-col gap-3">
 
-                        <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm w-fit">
+                        <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm w-fit">
 
                           {approval.status}
 
@@ -213,13 +251,13 @@ export default function ApprovalsPage() {
 
                           <div className="bg-slate-100 border border-slate-200 rounded-xl p-3">
 
-                            <p className="text-xs font-semibold text-gray-500 mb-1">
+                            <p className="text-xs font-semibold text-slate-500 mb-1">
 
                               Remarks
 
                             </p>
 
-                            <p className="text-sm text-gray-700">
+                            <p className="text-sm text-slate-700">
 
                               {approval.remarks}
 
@@ -241,7 +279,7 @@ export default function ApprovalsPage() {
                             "approved"
                           )
                         }
-                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl font-semibold"
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2 rounded-xl font-semibold"
                       >
 
                         Approve
@@ -255,7 +293,7 @@ export default function ApprovalsPage() {
                             "hold"
                           )
                         }
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-xl font-semibold"
+                        className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-xl font-semibold"
                       >
 
                         Hold
@@ -286,7 +324,7 @@ export default function ApprovalsPage() {
 
           ) : (
 
-            <div className="bg-white rounded-2xl shadow-lg p-10 text-center text-gray-500">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 text-center text-slate-500">
 
               No pending approvals
 
@@ -294,6 +332,9 @@ export default function ApprovalsPage() {
           )}
 
         </div>
+
+          </>
+        )}
 
       </div>
 

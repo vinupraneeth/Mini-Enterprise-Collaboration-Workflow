@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from sqlalchemy.orm import Session
 
 from app.models.approval_model import (
@@ -24,16 +26,24 @@ def get_approval_by_id(
     approval_id: int
 ):
 
-    return db.query(Approval).filter(
-        Approval.id == approval_id
-    ).first()
+    result = db.execute(
+        select(Approval).where(
+            Approval.id == approval_id
+        )
+    )
+
+    return result.scalar_one_or_none()
 
 
 def get_all_approvals(
     db: Session
 ):
 
-    return db.query(Approval).all()
+    result = db.execute(
+        select(Approval)
+    )
+
+    return result.scalars().all()
 
 
 def update_approval(

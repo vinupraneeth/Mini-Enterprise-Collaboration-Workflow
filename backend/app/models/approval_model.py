@@ -1,78 +1,79 @@
+from datetime import datetime
+
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    ForeignKey,
     DateTime,
+    ForeignKey,
+    String,
     Text
+)
+
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship
 )
 
 from sqlalchemy.sql import func
 
 from app.db.database import Base
 
-from sqlalchemy.orm import relationship
 
 class Approval(Base):
 
     __tablename__ = "approvals"
 
-    id = Column(
-        Integer,
+    id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True
     )
 
-    title = Column(
+    title: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
         default="Task approval request"
     )
 
-    description = Column(
+    description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True
     )
 
-    task_id = Column(
-        Integer,
+    task_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id"),
         nullable=True
     )
 
-    requested_by = Column(
-        Integer,
+    requested_by: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False
     )
 
-    reviewed_by = Column(
-        Integer,
+    reviewed_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"),
         nullable=True
     )
 
-    status = Column(
+    status: Mapped[str] = mapped_column(
         String(50),
         default="pending"
     )
 
-    current_level = Column(
+    current_level: Mapped[str | None] = mapped_column(
         String(50),
         default="manager"
     )
 
-    remarks = Column(
+    remarks: Mapped[str | None] = mapped_column(
         Text,
         nullable=True
     )
 
-    created_at = Column(
+    created_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
     )
 
-    updated_at = Column(
+    updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now()

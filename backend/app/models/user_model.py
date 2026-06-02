@@ -1,47 +1,66 @@
+from datetime import datetime
+
 from sqlalchemy import (
-    Column,
-    Integer,
+    Boolean,
+    DateTime,
     String
 )
 
-from sqlalchemy.orm import relationship
-
-from app.db.database import Base
-
-from sqlalchemy import Boolean, DateTime
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship
+)
 
 from sqlalchemy.sql import func
+
+from app.db.database import Base
 
 
 class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(
-        Integer,
+    id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True
     )
 
-    name = Column(
+    name: Mapped[str] = mapped_column(
         String(100),
         nullable=False
     )
 
-    email = Column(
+    email: Mapped[str] = mapped_column(
         String(255),
         unique=True,
         nullable=False
     )
 
-    hashed_password = Column(
+    hashed_password: Mapped[str] = mapped_column(
         String(255),
         nullable=False
     )
 
-    role = Column(
+    role: Mapped[str] = mapped_column(
         String(50),
         nullable=False
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True
+    )
+
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )
 
     assigned_tasks = relationship(
@@ -60,20 +79,4 @@ class User(Base):
         "Task",
         foreign_keys="Task.updated_by",
         overlaps="updater"
-    )
-
-    is_active = Column(
-        Boolean,
-        default=True
-    )
-
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
-
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
     )

@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from sqlalchemy.orm import Session
 
 from app.models.task_comment_model import (
@@ -28,29 +30,31 @@ def get_comments_by_task(
     task_id: int
 ):
 
-    comments = db.query(
+    comments = db.execute(
 
-        TaskComment,
+        select(
 
-        User.name
+            TaskComment,
 
-    ).join(
+            User.name
 
-        User,
+        ).join(
 
-        TaskComment.user_id
-        == User.id
+            User,
 
-    ).filter(
+            TaskComment.user_id
+            == User.id
 
-        TaskComment.task_id
-        == task_id
+        ).where(
 
-    ).order_by(
+            TaskComment.task_id
+            == task_id
 
-        TaskComment.created_at
-        .desc()
+        ).order_by(
 
+            TaskComment.created_at
+            .desc()
+        )
     ).all()
 
     return [

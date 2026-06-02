@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from sqlalchemy.orm import Session
 
 from app.models.task_model import Task
@@ -48,7 +50,11 @@ def get_all_tasks(
     db: Session
 ):
 
-    return db.query(Task).all()
+    result = db.execute(
+        select(Task)
+    )
+
+    return result.scalars().all()
 
 
 def get_task_by_id(
@@ -58,9 +64,13 @@ def get_task_by_id(
     task_id: int
 ):
 
-    return db.query(Task).filter(
-        Task.id == task_id
-    ).first()
+    result = db.execute(
+        select(Task).where(
+            Task.id == task_id
+        )
+    )
+
+    return result.scalar_one_or_none()
 
 
 def update_task(

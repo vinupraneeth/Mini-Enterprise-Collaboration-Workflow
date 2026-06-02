@@ -100,7 +100,7 @@ function LoginPage() {
 
     } catch (error) {
 
-      console.log(error);
+      console.error(error);
 
       alert("Invalid credentials");
 
@@ -113,17 +113,17 @@ function LoginPage() {
 
   return (
 
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-slate-100">
 
-      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-emerald-600 via-teal-700 to-cyan-900 text-white items-center justify-center p-10">
+      <div className="hidden md:flex w-1/2 bg-slate-900 text-white items-center justify-center p-10">
 
-        <div>
+        <div className="max-w-md">
 
           <h1 className="text-5xl font-bold mb-6">
             Enterprise Workflow
           </h1>
 
-          <p className="text-lg text-gray-200 leading-8">
+          <p className="text-lg text-slate-300 leading-8">
 
             Manage tasks,
             collaborate with teams,
@@ -137,17 +137,17 @@ function LoginPage() {
 
       </div>
 
-      <div className="w-full md:w-1/2 flex justify-center items-center bg-gray-100">
+      <div className="w-full md:w-1/2 flex justify-center items-center bg-slate-100 px-6">
 
-        <div className="w-[420px] bg-white shadow-2xl rounded-2xl p-10">
+        <div className="w-full max-w-[420px] bg-white border border-slate-200 shadow-sm rounded-2xl p-10">
 
           <div className="mb-8 text-center">
 
-            <h2 className="text-3xl font-bold text-gray-800">
+            <h2 className="text-3xl font-bold text-slate-900">
               Welcome Back
             </h2>
 
-            <p className="text-gray-500 mt-2">
+            <p className="text-slate-500 mt-2">
               Login to continue
             </p>
 
@@ -160,7 +160,7 @@ function LoginPage() {
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Email
               </label>
 
@@ -173,7 +173,7 @@ function LoginPage() {
                     e.target.value
                   )
                 }
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 required
               />
 
@@ -181,7 +181,7 @@ function LoginPage() {
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Password
               </label>
 
@@ -194,7 +194,7 @@ function LoginPage() {
                     e.target.value
                   )
                 }
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 required
               />
 
@@ -203,7 +203,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-lg font-semibold transition"
             >
 
               {
@@ -218,7 +218,7 @@ function LoginPage() {
 
           </form>
 
-          <div className="mt-6 text-center text-gray-600">
+          <div className="mt-6 text-center text-slate-600">
 
             Don't have an account?
 
@@ -228,7 +228,7 @@ function LoginPage() {
               onClick={() =>
                 navigate("/register")
               }
-              className="text-blue-600 font-semibold cursor-pointer hover:underline"
+              className="text-slate-900 font-semibold cursor-pointer hover:underline"
             >
               Register
             </span>

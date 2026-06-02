@@ -1,12 +1,14 @@
 # Backend - Mini Enterprise Collaboration Workflow
 
-This folder contains the FastAPI backend for the workflow application. It handles authentication, role-based access, task management, Kanban workflow rules, comments, approvals, and dashboard data.
+This folder contains the FastAPI backend for the Mini Enterprise Collaboration Workflow project. The backend handles authentication, role-based access, tasks, comments, approvals, documents, notifications, audit logs, and dashboard data.
 
-The code is organized in a layered style:
+The code follows a simple layered structure:
 
 ```text
 Router -> Service -> Repository -> Database
 ```
+
+Routers handle API requests, services contain business logic, repositories handle database operations, and models define the database tables.
 
 ## Tech Stack
 
@@ -15,47 +17,66 @@ Router -> Service -> Repository -> Database
 - Pydantic
 - Alembic
 - MySQL
-- python-jose for JWT
+- fastapi-pagination
+- python-jose for JWT authentication
 - Passlib and bcrypt for password hashing
 
 ## Main Modules
 
 Authentication:
-- Register users with a role
-- Login and receive JWT token
-- Get current logged-in user
+- Register users with a selected role
+- Login and receive a JWT access token
+- Fetch the currently logged-in user
 
 Users:
-- Admin can view all users
-- Admin and Manager can fetch employee users for assignment
+- Admin can view users
+- Admin and Manager can fetch employee users for task assignment
 
 Tasks:
 - Create, list, view, update, assign, and delete tasks
-- Admin can access all tasks
-- Managers can manage related tasks
-- Employees can view and update only assigned tasks
+- Admin can view all tasks
+- Managers can manage tasks related to them
+- Employees can view and update only their assigned tasks
 
 Workflow:
-- Supported status flow: `todo -> in_progress -> review -> done`
-- Invalid status transitions are blocked
+- Main task flow is `todo -> in_progress -> review -> done`
+- Invalid status changes are blocked from the backend
 - Status changes are stored in task history
+- Final movement to `done` happens through approval
 
 Comments:
 - Users can add comments to tasks they can access
 - Admin and Manager can add internal notes
-- Employee users can only add public comments
+- Employees can add only public comments
+- Internal notes are not shown to employees
 
 Approvals:
-- Approval requests move through Manager and Admin review levels
+- Tasks submitted for review create approval requests
+- Manager reviews first, then Admin gives final approval
 - Supported actions are `approve`, `reject`, and `hold`
 - Rejection requires a comment
 - Approval actions are saved in approval history
-- Managers can review only approvals related to their tasks
+
+Documents:
+- Upload documents against tasks
+- Keep document versions for the same task
+- Download documents with authentication and access checks
+
+Notifications:
+- Store user-specific workflow notifications
+- Mark notifications as read
+- Employees do not receive internal note notifications
+
+Audit Logs and Activity:
+- Audit logs record important backend actions
+- Audit logs are available to Admin users
+- Activity feed is filtered based on the logged-in user's role
 
 Dashboard:
 - Summary counts
 - Task distribution by status
-- Basic analytics endpoint
+- Basic analytics
+- AI-style workflow summary
 
 ## Setup
 
@@ -72,7 +93,7 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the backend folder. Use `.env.example` as a guide:
+Create a `.env` file in the backend folder. Use `.env.example` as the reference:
 
 ```text
 DATABASE_URL=mysql+pymysql://username:password@localhost:3306/workflow_db
@@ -81,7 +102,7 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
-Run database migrations:
+Run migrations:
 
 ```bash
 alembic upgrade head
@@ -145,6 +166,29 @@ Dashboard:
 GET /dashboard/summary
 GET /dashboard/task-distribution
 GET /dashboard/analytics
+GET /dashboard/ai-summary
+```
+
+Documents:
+
+```text
+POST /documents/upload
+GET  /documents/task/{task_id}
+GET  /documents/{document_id}
+```
+
+Notifications:
+
+```text
+GET   /notifications/
+PATCH /notifications/{id}/read
+```
+
+Audit Logs and Activity:
+
+```text
+GET /audit-logs/
+GET /activity/
 ```
 
 ## Example Payloads
@@ -158,16 +202,6 @@ Comment:
 }
 ```
 
-Approval request:
-
-```json
-{
-  "title": "Approval request for monthly finance report",
-  "description": "Please review and approve the completed report.",
-  "task_id": 1
-}
-```
-
 Approval action:
 
 ```json
@@ -176,3 +210,5 @@ Approval action:
   "comment": "Reviewed and approved."
 }
 ```
+
+Document upload is handled as multipart form data from Swagger or from the frontend document modal.

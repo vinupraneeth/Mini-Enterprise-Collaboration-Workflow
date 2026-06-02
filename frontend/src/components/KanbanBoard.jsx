@@ -25,6 +25,8 @@ function KanbanBoard({
 
   tasks,
 
+  user,
+
   onStatusChange,
 
   onEdit,
@@ -55,9 +57,50 @@ function KanbanBoard({
     setInternalInputs] =
     useState({})
 
+  const [documents,
+    setDocuments] =
+    useState({})
+
+  const [documentFiles,
+    setDocumentFiles] =
+    useState({})
+
   const token =
     localStorage.getItem(
       "token"
+    )
+
+  const canManageTasks =
+    user?.role === "admin" ||
+    user?.role === "manager"
+
+  const canAddInternalNotes =
+    user?.role === "admin" ||
+    user?.role === "manager"
+
+  const formatDateTime =
+    (value) => {
+
+      if (!value) {
+
+        return "Not set"
+      }
+
+      return new Date(value).toLocaleString(
+        "en-IN",
+        {
+          dateStyle: "medium",
+          timeStyle: "short"
+        }
+      )
+    }
+
+  const getUserLabel =
+    (name, id) => (
+
+      name
+        ? `${name} (#${id})`
+        : `User #${id}`
     )
 
 
@@ -85,6 +128,7 @@ function KanbanBoard({
             ...prev,
 
             [taskId]:
+              response.data.items ||
               response.data
           })
         )
@@ -155,6 +199,170 @@ function KanbanBoard({
     }
 
 
+  const fetchDocuments =
+    async (taskId) => {
+
+      try {
+
+        const response =
+          await axios.get(
+
+            `http://127.0.0.1:8000/documents/task/${taskId}`,
+
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`
+              }
+            }
+          )
+
+        setDocuments(
+          (prev) => ({
+
+            ...prev,
+
+            [taskId]:
+              response.data.items ||
+              response.data
+          })
+        )
+
+      } catch (error) {
+
+        console.error(error)
+      }
+    }
+
+
+  const uploadDocument =
+    async (taskId) => {
+
+      const file =
+        documentFiles[taskId]
+
+      if (!file) {
+
+        const fileInput =
+          document.getElementById(
+            `document-upload-${taskId}`
+          )
+
+        fileInput?.click()
+
+        return
+      }
+
+      const formData =
+        new FormData()
+
+      formData.append(
+        "file",
+        file
+      )
+
+      try {
+
+        await axios.post(
+
+          `http://127.0.0.1:8000/documents/upload?task_id=${taskId}`,
+
+          formData,
+
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        )
+
+        setDocumentFiles(
+          (prev) => ({
+
+            ...prev,
+
+            [taskId]: null
+          })
+        )
+
+        const fileInput =
+          document.getElementById(
+            `document-upload-${taskId}`
+          )
+
+        if (fileInput) {
+
+          fileInput.value = ""
+        }
+
+        fetchDocuments(taskId)
+
+      } catch (error) {
+
+        console.error(error)
+
+        alert(
+          error.response?.data?.detail ||
+          "Document upload failed"
+        )
+      }
+    }
+
+
+  const downloadDocument =
+    async (documentItem) => {
+
+      try {
+
+        const response =
+          await axios.get(
+
+            `http://127.0.0.1:8000/documents/${documentItem.id}`,
+
+            {
+              responseType: "blob",
+              headers: {
+                Authorization:
+                  `Bearer ${token}`
+              }
+            }
+          )
+
+        const url =
+          window.URL.createObjectURL(
+            new Blob([response.data])
+          )
+
+        const link =
+          document.createElement("a")
+
+        link.href = url
+
+        link.setAttribute(
+          "download",
+          documentItem.file_name
+        )
+
+        document.body.appendChild(link)
+
+        link.click()
+
+        link.remove()
+
+        window.URL.revokeObjectURL(url)
+
+      } catch (error) {
+
+        console.error(error)
+
+        alert(
+          "Document download failed"
+        )
+      }
+    }
+
+
   const handleDragEnd =
     (result) => {
 
@@ -196,7 +404,7 @@ function KanbanBoard({
       }
     >
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
 
         {Object.entries(columns)
           .map(
@@ -218,16 +426,16 @@ function KanbanBoard({
                       provided.innerRef
                     }
                     {...provided.droppableProps}
-                    className="bg-white/70 backdrop-blur-lg rounded-3xl p-5 shadow-xl min-h-[500px]"
+                    className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm min-h-[520px]"
                   >
 
-                    <h2 className="text-xl font-bold text-gray-700 mb-5">
+                    <h2 className="text-sm font-bold text-slate-700 tracking-wide mb-4">
 
                       {title}
 
                     </h2>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
 
                       {tasks
                         .filter(
@@ -267,14 +475,14 @@ function KanbanBoard({
 
                                   {...provided.dragHandleProps}
 
-                                  className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-5 shadow-lg"
+                                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
                                 >
 
                                   <div className="flex justify-between items-start gap-3">
 
                                     <div>
 
-                                      <h3 className="font-bold text-lg text-gray-800">
+                                      <h3 className="font-bold text-base text-slate-900">
 
                                         {
                                           task.title
@@ -282,7 +490,7 @@ function KanbanBoard({
 
                                       </h3>
 
-                                      <p className="text-sm text-gray-600 mt-2">
+                                      <p className="text-sm text-slate-600 mt-2 leading-5">
 
                                         {
                                           task.description
@@ -306,21 +514,73 @@ function KanbanBoard({
 
                                   </div>
 
-                                  <div className="mt-4 text-sm text-gray-500 space-y-3">
+                                  <div className="mt-4 text-sm text-slate-500 space-y-3">
 
-                                    <p>
+                                    <div className="grid grid-cols-1 gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3">
 
-                                      Due:
-                                      {" "}
-                                      {
-                                        task.due_date
-                                      }
+                                      <p>
 
-                                    </p>
+                                        Assigned to:
+                                        {" "}
+                                        <span className="font-semibold text-slate-700">
+
+                                          {getUserLabel(
+                                            task.assigned_to_name,
+                                            task.assigned_to
+                                          )}
+
+                                        </span>
+
+                                      </p>
+
+                                      <p>
+
+                                        Assigned by:
+                                        {" "}
+                                        <span className="font-semibold text-slate-700">
+
+                                          {getUserLabel(
+                                            task.created_by_name,
+                                            task.created_by
+                                          )}
+
+                                        </span>
+
+                                      </p>
+
+                                      <p>
+
+                                        Created:
+                                        {" "}
+                                        <span className="font-semibold text-slate-700">
+
+                                          {formatDateTime(
+                                            task.created_at
+                                          )}
+
+                                        </span>
+
+                                      </p>
+
+                                      <p>
+
+                                        Due:
+                                        {" "}
+                                        <span className="font-semibold text-slate-700">
+
+                                          {formatDateTime(
+                                            task.due_date
+                                          )}
+
+                                        </span>
+
+                                      </p>
+
+                                    </div>
 
                                     {task.approval_status && (
 
-                                      <div className="bg-slate-100 border border-slate-200 rounded-xl p-3">
+                                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
 
                                         <p className="text-xs font-semibold text-gray-500 mb-1">
 
@@ -348,37 +608,165 @@ function KanbanBoard({
 
                                   </div>
 
-                                  <div className="mt-5 flex gap-3">
+                                  {canManageTasks && (
+
+                                    <div className="mt-5 flex gap-3">
+
+                                      <button
+                                        onClick={() =>
+                                          onEdit(
+                                            task
+                                          )
+                                        }
+                                        className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-sm font-semibold"
+                                      >
+
+                                        Edit
+
+                                      </button>
+
+                                      <button
+                                        onClick={() =>
+                                          onDelete(
+                                            task.id
+                                          )
+                                        }
+                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-semibold"
+                                      >
+
+                                        Delete
+
+                                      </button>
+
+                                    </div>
+                                  )}
+
+                                  <div className="mt-4 border-t border-slate-100 pt-4">
 
                                     <button
                                       onClick={() =>
-                                        onEdit(
-                                          task
-                                        )
-                                      }
-                                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-semibold"
-                                    >
-
-                                      Edit
-
-                                    </button>
-
-                                    <button
-                                      onClick={() =>
-                                        onDelete(
+                                        fetchDocuments(
                                           task.id
                                         )
                                       }
-                                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl text-sm font-semibold"
+                                      className="text-sm text-slate-700 hover:text-slate-950 font-semibold"
                                     >
 
-                                      Delete
+                                      View Documents
 
                                     </button>
 
+                                    <div className="mt-3 space-y-2 max-h-36 overflow-y-auto pr-1">
+
+                                      {(documents[
+                                        task.id
+                                      ] || [])
+                                        .map(
+                                          (
+                                            document
+                                          ) => (
+
+                                            <div
+                                              key={
+                                                document.id
+                                              }
+                                              className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm flex items-center justify-between gap-3"
+                                            >
+
+                                              <div>
+
+                                                <p className="font-semibold text-gray-700">
+
+                                                  {
+                                                    document.file_name
+                                                  }
+
+                                                </p>
+
+                                                <p className="text-xs text-gray-500">
+
+                                                  Version
+                                                  {" "}
+                                                  {
+                                                    document.version
+                                                  }
+
+                                                </p>
+
+                                              </div>
+
+                                              <button
+                                                onClick={() =>
+                                                  downloadDocument(
+                                                    document
+                                                  )
+                                                }
+                                                className="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg text-xs font-semibold"
+                                              >
+
+                                                Download
+
+                                              </button>
+
+                                            </div>
+                                          )
+                                        )}
+                                    </div>
+
+                                    <div className="mt-3 flex flex-col gap-2">
+
+                                      <input
+                                        id={`document-upload-${task.id}`}
+                                        type="file"
+                                        onChange={(e) =>
+                                          setDocumentFiles(
+                                            (
+                                              prev
+                                            ) => ({
+
+                                              ...prev,
+
+                                              [task.id]:
+                                                e.target.files?.[0]
+                                            })
+                                          )
+                                        }
+                                        className="hidden"
+                                      />
+
+                                      {documentFiles[task.id] && (
+
+                                        <p className="text-xs text-gray-500">
+
+                                          Selected:
+                                          {" "}
+                                          {
+                                            documentFiles[task.id].name
+                                          }
+
+                                        </p>
+                                      )}
+
+                                      <button
+                                        onClick={() =>
+                                          uploadDocument(
+                                            task.id
+                                          )
+                                        }
+                                        className="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg text-sm font-semibold"
+                                      >
+
+                                        {documentFiles[task.id]
+                                          ? "Upload Selected Document"
+                                          : "Choose Document"}
+
+                                      </button>
+
+                                    </div>
+
                                   </div>
 
-                                  <div className="mt-4 border-t pt-4">
+                                  <div className="mt-4 border-t border-slate-100 pt-4">
 
                                     <button
                                       onClick={() =>
@@ -386,14 +774,14 @@ function KanbanBoard({
                                           task.id
                                         )
                                       }
-                                      className="text-sm text-indigo-600 font-semibold"
+                                      className="text-sm text-slate-700 hover:text-slate-950 font-semibold"
                                     >
 
                                       View Comments
 
                                     </button>
 
-                                    <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                                    <div className="mt-3 space-y-2 max-h-40 overflow-y-auto pr-1">
 
                                       {(comments[
                                         task.id
@@ -407,7 +795,7 @@ function KanbanBoard({
                                               key={
                                                 comment.id
                                               }
-                                              className="bg-white border rounded-lg p-3 text-sm"
+                                              className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm"
                                             >
 
                                               <div className="flex justify-between items-center">
@@ -424,7 +812,7 @@ function KanbanBoard({
 
                                                   {comment.is_internal && (
 
-                                                    <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full">
+                                                    <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">
 
                                                       Internal
 
@@ -484,7 +872,7 @@ function KanbanBoard({
                                               })
                                             )
                                           }
-                                          className="flex-1 border rounded-lg px-3 py-2 text-sm"
+                                          className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
                                         />
 
                                         <button
@@ -493,7 +881,7 @@ function KanbanBoard({
                                               task.id
                                             )
                                           }
-                                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm"
+                                          className="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg text-sm"
                                         >
 
                                           Add
@@ -502,33 +890,36 @@ function KanbanBoard({
 
                                       </div>
 
-                                      <label className="flex items-center gap-2 text-sm text-gray-600">
+                                      {canAddInternalNotes && (
 
-                                        <input
-                                          type="checkbox"
-                                          checked={
-                                            internalInputs[
-                                              task.id
-                                            ] || false
-                                          }
-                                          onChange={(e) =>
-                                            setInternalInputs(
-                                              (
-                                                prev
-                                              ) => ({
+                                        <label className="flex items-center gap-2 text-sm text-gray-600">
 
-                                                ...prev,
+                                          <input
+                                            type="checkbox"
+                                            checked={
+                                              internalInputs[
+                                                task.id
+                                              ] || false
+                                            }
+                                            onChange={(e) =>
+                                              setInternalInputs(
+                                                (
+                                                  prev
+                                                ) => ({
 
-                                                [task.id]:
-                                                  e.target.checked
-                                              })
-                                            )
-                                          }
-                                        />
+                                                  ...prev,
 
-                                        Internal Note
+                                                  [task.id]:
+                                                    e.target.checked
+                                                })
+                                              )
+                                            }
+                                          />
 
-                                      </label>
+                                          Internal Note
+
+                                        </label>
+                                      )}
 
                                     </div>
 

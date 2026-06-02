@@ -1,22 +1,26 @@
 # Mini Enterprise Collaboration Workflow
 
-A full-stack workflow management application built with FastAPI, React, MySQL, and Tailwind CSS.
+Mini Enterprise Collaboration Workflow is a full-stack application for managing internal tasks, approvals, comments, documents, and workflow updates. It is built with FastAPI, React, MySQL, and Tailwind CSS.
 
-The project started as a role-based task management system and was extended with workflow features such as Kanban tracking, comments, approval reviews, task history, and dashboard summaries.
+The project was developed in phases. The first phase focused on authentication, roles, and task management. Later phases added Kanban workflow tracking, comments, approvals, dashboard analytics, document versioning, notifications, audit logs, and activity tracking.
 
 ## Features
 
-- User registration and login with JWT authentication
+- User registration and login using JWT authentication
 - Role-based access for Admin, Manager, and Employee users
-- Task creation, assignment, editing, deletion, and role-based task visibility
-- Kanban workflow with the stages `todo`, `in_progress`, `review`, and `done`
-- Backend validation to prevent invalid workflow transitions
-- Task status history
+- Task creation, assignment, editing, deletion, and role-based visibility
+- Kanban workflow using `todo`, `in_progress`, `review`, and `done`
+- Backend validation for allowed task status transitions
+- Task status history for tracking workflow changes
 - Public comments and internal notes on tasks
-- Approval workflow with Manager review and Admin final approval
-- Approval history with action, user, comment, and timestamp
-- Dashboard summary and task distribution APIs
-- React frontend connected with the FastAPI backend
+- Manager and Admin approval workflow
+- Approval history with action, comment, reviewer, and status details
+- Dashboard summary, task distribution, analytics, and AI-style summary
+- Document upload, download, and version tracking for tasks
+- User notifications for task, document, and approval updates
+- Audit logs for important workflow actions
+- Role-based activity feed
+- Paginated listing APIs using `fastapi_pagination`
 
 ## Tech Stack
 
@@ -26,6 +30,7 @@ Backend:
 - Pydantic
 - Alembic
 - MySQL
+- fastapi-pagination
 - JWT authentication
 
 Frontend:
@@ -62,20 +67,25 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the `backend` folder. A sample is available at:
+Create a `.env` file inside the `backend` folder. The required variables are shown in:
 
 ```text
 backend/.env.example
 ```
 
-Run migrations and start the API:
+Run the database migrations:
 
 ```bash
 alembic upgrade head
+```
+
+Start the backend server:
+
+```bash
 uvicorn app.main:app --reload
 ```
 
-Swagger UI:
+Swagger UI will be available at:
 
 ```text
 http://127.0.0.1:8000/docs
@@ -102,20 +112,25 @@ http://localhost:5173
 - Tasks: `/tasks/`, `/tasks/kanban`, `/tasks/{id}/status`, `/tasks/{id}/status-history`
 - Comments: `/tasks/{id}/comments`
 - Approvals: `/approvals/`, `/approvals/{id}/action`, `/approvals/{id}/history`
-- Dashboard: `/dashboard/summary`, `/dashboard/task-distribution`, `/dashboard/analytics`
+- Dashboard: `/dashboard/summary`, `/dashboard/task-distribution`, `/dashboard/analytics`, `/dashboard/ai-summary`
+- Documents: `/documents/upload`, `/documents/task/{task_id}`, `/documents/{document_id}`
+- Notifications: `/notifications/`, `/notifications/{id}/read`
+- Audit Logs: `/audit-logs/`
+- Activity: `/activity/`
 
 ## Screenshots
 
-The `Screenshots` folder is organized by phase and includes backend Swagger tests, frontend screens, and MySQL verification screenshots.
+The `Screenshots` folder contains the testing proof for each phase. Screenshots are separated into Backend, Frontend, and MySQL folders.
 
 ```text
 Screenshots/
 |-- Phase 1 Screenshots/
-`-- Phase 2 Screenshots/
+|-- Phase 2 Screenshots/
+`-- Phase 3 Screenshots/
 ```
 
 ## Notes
 
 - The `.env` file is not committed.
-- Use `backend/.env.example` as the reference for required environment variables.
-- Run `npm run build` inside `frontend` to verify the React build.
+- Uploaded files are stored locally during development and ignored by git.
+- Run `npm run build` inside `frontend` before final submission to confirm the frontend build.

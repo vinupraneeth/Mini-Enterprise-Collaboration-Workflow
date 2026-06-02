@@ -16,6 +16,12 @@ import KanbanBoard from "../components/KanbanBoard"
 
 import DashboardAnalytics from "../components/DashboardAnalytics"
 
+import AiSummaryPanel from "../components/AiSummaryPanel"
+
+import NotificationsPanel from "../components/NotificationsPanel"
+
+import ActivityFeedPanel from "../components/ActivityFeedPanel"
+
 
 export default function DashboardPage() {
 
@@ -60,7 +66,10 @@ export default function DashboardPage() {
           }
         )
 
-      setTasks(response.data)
+      setTasks(
+        response.data.items ||
+        response.data
+      )
 
     } catch (error) {
 
@@ -232,7 +241,7 @@ export default function DashboardPage() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-teal-100">
+    <div className="min-h-screen bg-slate-100">
 
       <Navbar
         user={user}
@@ -241,17 +250,17 @@ export default function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
           <div>
 
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-3xl font-bold text-slate-900">
 
               Workflow Dashboard
 
             </h1>
 
-            <p className="text-gray-500 mt-1">
+            <p className="text-slate-500 mt-1">
 
               Manage enterprise workflow tasks
 
@@ -264,7 +273,7 @@ export default function DashboardPage() {
 
             <button
               onClick={handleCreate}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition"
             >
 
               + Create Task
@@ -279,6 +288,14 @@ export default function DashboardPage() {
         <DashboardAnalytics
           stats={stats}
         />
+
+        <AiSummaryPanel />
+
+        <NotificationsPanel
+          user={user}
+        />
+
+        <ActivityFeedPanel />
 
         <div className="mt-10">
 
@@ -296,6 +313,8 @@ export default function DashboardPage() {
 
               tasks={tasks}
 
+              user={user}
+
               onEdit={handleEdit}
 
               onDelete={handleDelete}
@@ -310,19 +329,58 @@ export default function DashboardPage() {
 
       {isModalOpen && !editingTask && (
 
-        <CreateTaskForm
+        <div className="fixed inset-0 bg-slate-950/50 flex justify-center items-center z-50 px-4">
 
-          closeModal={() =>
-            setIsModalOpen(false)
-          }
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
 
-          fetchTasks={() => {
+            <div className="flex items-center justify-between mb-6">
 
-            fetchTasks()
+              <div>
 
-            setIsModalOpen(false)
-          }}
-        />
+                <h2 className="text-2xl font-bold text-slate-900">
+
+                  Create Task
+
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+
+                  Add a new workflow task and assign ownership
+
+                </p>
+
+              </div>
+
+              <button
+                onClick={() =>
+                  setIsModalOpen(false)
+                }
+                className="text-slate-500 hover:text-red-600 text-xl"
+              >
+
+                x
+
+              </button>
+
+            </div>
+
+            <CreateTaskForm
+
+              closeModal={() =>
+                setIsModalOpen(false)
+              }
+
+              fetchTasks={() => {
+
+                fetchTasks()
+
+                setIsModalOpen(false)
+              }}
+            />
+
+          </div>
+
+        </div>
       )}
 
       {isModalOpen && editingTask && (

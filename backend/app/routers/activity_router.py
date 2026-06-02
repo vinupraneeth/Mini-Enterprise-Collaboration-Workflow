@@ -3,6 +3,8 @@ from fastapi import (
     Depends
 )
 
+from fastapi_pagination import Page, Params, paginate
+
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -23,14 +25,25 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get(
+    "/",
+    response_model=Page[dict]
+)
 def get_activity_feed_api(
 
     db: Session = Depends(get_db),
 
     current_user = Depends(
         get_current_user
-    )
+    ),
+
+    params: Params = Depends()
 ):
 
-    return fetch_activity_feed(db)
+    return paginate(
+        fetch_activity_feed(
+            db,
+            current_user
+        ),
+        params
+    )

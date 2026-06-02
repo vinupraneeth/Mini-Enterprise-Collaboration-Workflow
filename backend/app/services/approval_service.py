@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 
+from sqlalchemy import or_, select
+
 from sqlalchemy.orm import Session
 
 from app.models.approval_model import Approval
@@ -8,7 +10,19 @@ from app.models.approval_history_model import ApprovalHistory
 
 from app.models.task_model import Task
 
+from app.models.task_history_model import TaskHistory
+
+from app.models.user_model import User
+
 from app.schemas.approval_schema import ApprovalCreate, ApprovalReview
+
+from app.services.audit_log_service import (
+    create_audit_log
+)
+
+from app.services.notification_service import (
+    create_notification
+)
 
 
 def manager_can_access_approval(
@@ -21,9 +35,11 @@ def manager_can_access_approval(
 
         return approval.current_level == "manager"
 
-    task = db.query(Task).filter(
-        Task.id == approval.task_id
-    ).first()
+    task = db.execute(
+        select(Task).where(
+            Task.id == approval.task_id
+        )
+    ).scalar_one_or_none()
 
     if not task:
 
@@ -70,15 +86,82 @@ def create_approval_history(
     return history
 
 
+def update_task_status_after_approval(
+    db: Session,
+    task: Task,
+    new_status: str,
+    current_user
+):
+
+    if task.status == new_status:
+
+        return
+
+    old_status = task.status
+
+    task.status = new_status
+
+    history = TaskHistory(
+
+        task_id=task.id,
+
+        old_status=old_status,
+
+        new_status=new_status,
+
+        changed_by=current_user.id
+    )
+
+    db.add(history)
+
+    create_audit_log(
+        db,
+        current_user.id,
+        f"changed task status from {old_status} to {new_status}",
+        "task",
+        task.id
+    )
+
+    notified_users = set()
+
+    if task.assigned_to and task.assigned_to != current_user.id:
+
+        create_notification(
+            db,
+            task.assigned_to,
+            f"Task #{task.id} status changed to {new_status}."
+        )
+
+        notified_users.add(task.assigned_to)
+
+    if (
+        task.created_by
+        and
+        task.created_by != current_user.id
+        and
+        task.created_by not in notified_users
+    ):
+
+        create_notification(
+            db,
+            task.created_by,
+            f"Task #{task.id} status changed to {new_status}."
+        )
+
+
 def create_approval_request(
     db: Session,
     approval_data: ApprovalCreate,
     current_user
 ):
+    task = None
+
     if approval_data.task_id is not None:
-        task = db.query(Task).filter(
-            Task.id == approval_data.task_id
-        ).first()
+        task = db.execute(
+            select(Task).where(
+                Task.id == approval_data.task_id
+            )
+        ).scalar_one_or_none()
 
         if not task:
             raise HTTPException(
@@ -132,6 +215,22 @@ def create_approval_request(
         comment="Approval request submitted"
     )
 
+    create_audit_log(
+        db,
+        current_user.id,
+        "submitted approval",
+        "approval",
+        approval.id
+    )
+
+    if task and task.created_by and task.created_by != current_user.id:
+
+        create_notification(
+            db,
+            task.created_by,
+            f"Approval request submitted for task #{task.id}."
+        )
+
     db.commit()
     db.refresh(approval)
 
@@ -143,40 +242,47 @@ def fetch_approvals(
     db: Session,
     current_user
 ):
-    query = db.query(Approval)
+    return db.execute(
+        get_approvals_statement(
+            current_user
+        )
+    ).scalars().all()
+
+
+def get_approvals_statement(
+    current_user
+):
 
     if current_user.role == "admin":
-        return query.order_by(
+
+        return select(Approval).where(
+            Approval.current_level == "admin"
+        ).order_by(
             Approval.created_at.desc()
-        ).all()
+        )
 
     if current_user.role == "manager":
 
-        approvals = query.filter(
-            Approval.current_level == "manager"
+        return select(Approval).join(
+            Task,
+            Approval.task_id == Task.id
+        ).where(
+            Approval.current_level == "manager",
+            or_(
+                Task.created_by == current_user.id,
+                Task.assigned_to == current_user.id
+            )
         ).order_by(
             Approval.created_at.desc()
-        ).all()
-
-        return [
-
-            approval
-
-            for approval in approvals
-
-            if manager_can_access_approval(
-                db,
-                approval,
-                current_user
-            )
-        ]
+        )
 
     if current_user.role == "employee":
-        return query.filter(
+
+        return select(Approval).where(
             Approval.requested_by == current_user.id
         ).order_by(
             Approval.created_at.desc()
-        ).all()
+        )
 
     raise HTTPException(
         status_code=403,
@@ -191,9 +297,11 @@ def review_approval_request(
     review_data: ApprovalReview,
     current_user
 ):
-    approval = db.query(Approval).filter(
-        Approval.id == approval_id
-    ).first()
+    approval = db.execute(
+        select(Approval).where(
+            Approval.id == approval_id
+        )
+    ).scalar_one_or_none()
 
     if not approval:
         raise HTTPException(
@@ -250,6 +358,16 @@ def review_approval_request(
     approval.reviewed_by = current_user.id
     approval.remarks = comment
 
+    task = None
+
+    if approval.task_id is not None:
+
+        task = db.execute(
+            select(Task).where(
+                Task.id == approval.task_id
+            )
+        ).scalar_one_or_none()
+
     if approval.current_level == "manager":
         if action == "approve":
             approval.status = "manager_approved"
@@ -258,6 +376,15 @@ def review_approval_request(
         elif action == "reject":
             approval.status = "rejected"
             approval.current_level = "completed"
+
+            if task:
+
+                update_task_status_after_approval(
+                    db,
+                    task,
+                    "in_progress",
+                    current_user
+                )
 
         elif action == "hold":
             approval.status = "hold"
@@ -268,17 +395,27 @@ def review_approval_request(
             approval.status = "admin_approved"
             approval.current_level = "completed"
 
-            if approval.task_id is not None:
-                task = db.query(Task).filter(
-                    Task.id == approval.task_id
-                ).first()
+            if task:
 
-                if task:
-                    task.status = "done"
+                update_task_status_after_approval(
+                    db,
+                    task,
+                    "done",
+                    current_user
+                )
 
         elif action == "reject":
             approval.status = "rejected"
             approval.current_level = "completed"
+
+            if task:
+
+                update_task_status_after_approval(
+                    db,
+                    task,
+                    "in_progress",
+                    current_user
+                )
 
         elif action == "hold":
             approval.status = "hold"
@@ -293,6 +430,62 @@ def review_approval_request(
         comment=comment
     )
 
+    action_labels = {
+
+        "approve": "approved",
+
+        "reject": "rejected",
+
+        "hold": "placed on hold"
+    }
+
+    audit_labels = {
+
+        "approve": "approved approval",
+
+        "reject": "rejected approval",
+
+        "hold": "held approval"
+    }
+
+    create_audit_log(
+        db,
+        current_user.id,
+        audit_labels[action],
+        "approval",
+        approval.id
+    )
+
+    if approval.requested_by != current_user.id:
+
+        create_notification(
+            db,
+            approval.requested_by,
+            f"Your approval request #{approval.id} was {action_labels[action]}."
+        )
+
+    if (
+        action == "approve"
+        and
+        approval.current_level == "admin"
+    ):
+
+        admins = db.execute(
+            select(User).where(
+                User.role == "admin"
+            )
+        ).scalars().all()
+
+        for admin in admins:
+
+            if admin.id != current_user.id:
+
+                create_notification(
+                    db,
+                    admin.id,
+                    f"Approval request #{approval.id} is waiting for final admin review."
+                )
+
     db.commit()
     db.refresh(approval)
 
@@ -304,9 +497,27 @@ def fetch_approval_history(
     approval_id: int,
     current_user
 ):
-    approval = db.query(Approval).filter(
-        Approval.id == approval_id
-    ).first()
+
+    return db.execute(
+        get_approval_history_statement(
+            db,
+            approval_id,
+            current_user
+        )
+    ).scalars().all()
+
+
+def get_approval_history_statement(
+    db: Session,
+    approval_id: int,
+    current_user
+):
+
+    approval = db.execute(
+        select(Approval).where(
+            Approval.id == approval_id
+        )
+    ).scalar_one_or_none()
 
     if not approval:
         raise HTTPException(
@@ -339,8 +550,8 @@ def fetch_approval_history(
             detail="Not authorized"
         )
 
-    return db.query(ApprovalHistory).filter(
+    return select(ApprovalHistory).where(
         ApprovalHistory.approval_id == approval_id
     ).order_by(
         ApprovalHistory.created_at.desc()
-    ).all()
+    )

@@ -1,6 +1,6 @@
 # Frontend - Mini Enterprise Collaboration Workflow
 
-This folder contains the React frontend for the workflow application. It connects to the FastAPI backend and provides screens for authentication, task management, Kanban tracking, comments, dashboard summaries, and approval review.
+This folder contains the React frontend for the Mini Enterprise Collaboration Workflow project. It connects with the FastAPI backend and provides the screens used for login, task management, Kanban workflow, approvals, comments, documents, notifications, audit logs, and dashboard updates.
 
 ## Tech Stack
 
@@ -17,27 +17,38 @@ This folder contains the React frontend for the workflow application. It connect
 - Registration
 - Dashboard
 - Kanban task board
-- Create task form
+- Create task modal
 - Edit task modal
 - Task comments
 - Approvals page
+- Task documents modal
+- Notifications panel
+- Activity feed panel
+- AI summary panel
+- Admin audit logs page
 
 ## Role-Based UI
 
 Admin:
-- Can view and manage tasks
-- Can review approvals at the final approval level
-- Can access dashboard information
+- Can view all tasks
+- Can review final approval requests
+- Can view dashboard information
+- Can open audit logs
+- Can see wider workflow activity
 
 Manager:
-- Can create and assign tasks
-- Can review related manager-level approvals
+- Can create and assign tasks to employees
+- Can manage tasks related to them
+- Can review manager-level approval requests
 - Can add public comments and internal notes
+- Can view related documents, notifications, and activity
 
 Employee:
 - Can view assigned tasks
-- Can move assigned tasks through allowed workflow stages
+- Can update assigned tasks through allowed workflow stages
 - Can add public comments
+- Can upload and download documents for assigned tasks
+- Can view related notifications and activity
 - Cannot create internal notes or review approvals
 
 ## Setup
@@ -54,7 +65,7 @@ Start the development server:
 npm run dev
 ```
 
-Default URL:
+Default frontend URL:
 
 ```text
 http://localhost:5173
@@ -72,4 +83,6 @@ http://127.0.0.1:8000
 npm run build
 ```
 
-The frontend stores the JWT token in local storage after login and uses it for authenticated API requests.
+The frontend stores the JWT token in local storage after login and sends it with authenticated API requests.
+
+Document upload and download are handled from the task documents modal. Dashboard panels show summary, notifications, and activity based on the logged-in user's role.

@@ -3,6 +3,10 @@ from fastapi import (
     Depends
 )
 
+from fastapi_pagination import Page, paginate
+
+from fastapi_pagination.ext.sqlalchemy import paginate as sqlalchemy_paginate
+
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -24,7 +28,7 @@ from app.services.task_service import (
     remove_task,
     edit_task,
     assign_task,
-    fetch_task_status_history
+    get_task_status_history_statement
 )
 
 from app.core.dependencies import (
@@ -61,7 +65,7 @@ def create_task_api(
 
 @router.get(
     "/",
-    response_model=list[TaskResponse]
+    response_model=Page[TaskResponse]
 )
 def get_tasks_api(
     db: Session = Depends(get_db),
@@ -70,9 +74,11 @@ def get_tasks_api(
     )
 ):
 
-    return fetch_tasks(
-        db,
-        current_user
+    return paginate(
+        fetch_tasks(
+            db,
+            current_user
+        )
     )
 
 
@@ -111,7 +117,7 @@ def get_kanban_tasks_api(
 
 @router.get(
     "/{task_id}/status-history",
-    response_model=list[TaskHistoryResponse]
+    response_model=Page[TaskHistoryResponse]
 )
 def get_task_status_history_api(
     task_id: int,
@@ -119,10 +125,13 @@ def get_task_status_history_api(
     current_user = Depends(get_current_user)
 ):
 
-    return fetch_task_status_history(
+    return sqlalchemy_paginate(
         db,
-        task_id,
-        current_user
+        get_task_status_history_statement(
+            db,
+            task_id,
+            current_user
+        )
     )
 
 

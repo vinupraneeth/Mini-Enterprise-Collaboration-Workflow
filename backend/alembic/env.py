@@ -17,6 +17,12 @@ from app.models.approval_model import Approval
 
 from app.models.approval_history_model import ApprovalHistory
 
+from app.models.document_model import Document
+
+from app.models.audit_log_model import AuditLog
+
+from app.models.notification_model import Notification
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

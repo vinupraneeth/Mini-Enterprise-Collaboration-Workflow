@@ -1,15 +1,19 @@
+from datetime import datetime
+
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    ForeignKey,
     DateTime,
+    ForeignKey,
+    String,
     Text
 )
 
-from sqlalchemy.sql import func
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship
+)
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.db.database import Base
 
@@ -18,60 +22,56 @@ class Task(Base):
 
     __tablename__ = "tasks"
 
-    id = Column(
-        Integer,
+    id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True
     )
 
-    title = Column(
+    title: Mapped[str] = mapped_column(
         String(255),
         nullable=False
     )
 
-    description = Column(
+    description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True
     )
 
-    status = Column(
+    status: Mapped[str] = mapped_column(
         String(50),
         default="todo"
     )
 
-    priority = Column(
+    priority: Mapped[str] = mapped_column(
         String(50),
         default="medium"
     )
 
-    due_date = Column(
+    due_date: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True
     )
 
-    assigned_to = Column(
-        Integer,
+    assigned_to: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"),
         nullable=True
     )
 
-    created_by = Column(
-        Integer,
+    created_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id")
     )
 
-    updated_by = Column(
-        Integer,
+    updated_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"),
         nullable=True
     )
 
-    created_at = Column(
+    created_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
     )
 
-    updated_at = Column(
+    updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now()

@@ -4,6 +4,12 @@ from fastapi import (
     HTTPException
 )
 
+from fastapi_pagination import Page
+
+from fastapi_pagination.ext.sqlalchemy import paginate
+
+from sqlalchemy import select
+
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -28,7 +34,7 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[UserResponse]
+    response_model=Page[UserResponse]
 )
 def get_users(
     db: Session = Depends(get_db),
@@ -37,14 +43,15 @@ def get_users(
     )
 ):
 
-    users = db.query(User).all()
-
-    return users
+    return paginate(
+        db,
+        select(User)
+    )
 
 
 @router.get(
     "/employees",
-    response_model=list[UserResponse]
+    response_model=Page[UserResponse]
 )
 def get_employees(
     db: Session = Depends(get_db),
@@ -63,9 +70,12 @@ def get_employees(
             detail="Not authorized"
         )
 
-    return db.query(User).filter(
-        User.role == "employee"
-    ).all()
+    return paginate(
+        db,
+        select(User).where(
+            User.role == "employee"
+        )
+    )
 
 
 @router.get(
@@ -80,9 +90,13 @@ def get_user_by_id(
     )
 ):
 
-    user = db.query(User).filter(
-        User.id == user_id
-    ).first()
+    result = db.execute(
+        select(User).where(
+            User.id == user_id
+        )
+    )
+
+    user = result.scalar_one_or_none()
 
     if not user:
 

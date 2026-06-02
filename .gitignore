@@ -30,6 +30,10 @@ frontend/dist/
 build/
 frontend/build/
 
+# Uploaded files
+backend/uploads/
+uploads/
+
 # Archives and local database files
 *.zip
 *.db

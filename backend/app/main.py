@@ -1,7 +1,13 @@
 from fastapi import FastAPI
 
+from fastapi_pagination import add_pagination
+
 from fastapi.middleware.cors import (
     CORSMiddleware
+)
+
+from app.middleware.request_logging_middleware import (
+    RequestLoggingMiddleware
 )
 
 from app.models import *
@@ -39,8 +45,26 @@ from app.routers.dashboard_router import (
     router as dashboard_router
 )
 
+from app.routers.audit_log_router import (
+    router as audit_log_router
+)
+
+from app.routers.notification_router import (
+    router as notification_router
+)
+
+from app.routers.document_router import (
+    router as document_router
+)
+
 #CORS MIDDLEWARE COnFIG for CROSS ORIGIN request handling
 app = FastAPI()
+
+
+app.add_middleware(
+
+    RequestLoggingMiddleware
+)
 
 
 app.add_middleware(
@@ -72,3 +96,11 @@ app.include_router(approval_router)
 app.include_router(activity_router)
 
 app.include_router(dashboard_router)
+
+app.include_router(audit_log_router)
+
+app.include_router(notification_router)
+
+app.include_router(document_router)
+
+add_pagination(app)

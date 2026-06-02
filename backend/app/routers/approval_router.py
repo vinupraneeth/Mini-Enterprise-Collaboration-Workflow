@@ -3,6 +3,10 @@ from fastapi import (
     Depends
 )
 
+from fastapi_pagination import Page, paginate
+
+from fastapi_pagination.ext.sqlalchemy import paginate as sqlalchemy_paginate
+
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -26,11 +30,11 @@ from app.services.approval_service import (
 
     create_approval_request,
 
-    fetch_approvals,
+    get_approvals_statement,
 
     review_approval_request,
 
-    fetch_approval_history
+    get_approval_history_statement
 )
 
 
@@ -75,7 +79,7 @@ def create_approval_api(
 
     "/",
 
-    response_model=list[
+    response_model=Page[
         ApprovalResponse
     ]
 )
@@ -88,11 +92,11 @@ def get_approvals_api(
     )
 ):
 
-    return fetch_approvals(
-
-    db,
-
-    current_user
+    return sqlalchemy_paginate(
+        db,
+        get_approvals_statement(
+            current_user
+        )
     )
 
 
@@ -130,7 +134,7 @@ def approval_action_api(
 @router.get(
     "/{approval_id}/history",
 
-    response_model=list[ApprovalHistoryResponse]
+    response_model=Page[ApprovalHistoryResponse]
 )
 def get_approval_history_api(
 
@@ -140,13 +144,18 @@ def get_approval_history_api(
     current_user = Depends(get_current_user)
 ):
 
-    return fetch_approval_history(
+    return sqlalchemy_paginate(
 
         db,
 
-        approval_id,
+        get_approval_history_statement(
 
-        current_user
+            db,
+
+            approval_id,
+
+            current_user
+        )
     )
 
 

@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User
@@ -5,7 +7,13 @@ from app.models.user_model import User
 
 def get_user_by_email( db: Session, email: str ):
     
-    return db.query(User).filter(User.email == email).first()
+    result = db.execute(
+        select(User).where(
+            User.email == email
+        )
+    )
+
+    return result.scalar_one_or_none()
 
 
 def create_user( db: Session, user_data: dict ):

@@ -15,6 +15,14 @@ from app.repositories.task_comment_repository import (
     get_comments_by_task
 )
 
+from app.services.audit_log_service import (
+    create_audit_log
+)
+
+from app.services.notification_service import (
+    create_notification
+)
+
 
 def check_task_access(
     task,
@@ -91,6 +99,68 @@ def add_comment_to_task(
         db,
         comment
     )
+
+    action_text = (
+        "added internal note"
+        if comment_data.is_internal
+        else
+        "added comment"
+    )
+
+    create_audit_log(
+        db,
+        current_user.id,
+        action_text,
+        "task",
+        task_id
+    )
+
+    message = (
+        f"Internal note added on task #{task_id}."
+        if comment_data.is_internal
+        else
+        f"Comment added on task #{task_id}."
+    )
+
+    notified_users = set()
+
+    if comment_data.is_internal:
+
+        if task.created_by and task.created_by != current_user.id:
+
+            create_notification(
+                db,
+                task.created_by,
+                message
+            )
+
+    else:
+
+        if task.created_by and task.created_by != current_user.id:
+
+            create_notification(
+                db,
+                task.created_by,
+                message
+            )
+
+            notified_users.add(task.created_by)
+
+        if (
+            task.assigned_to
+            and
+            task.assigned_to != current_user.id
+            and
+            task.assigned_to not in notified_users
+        ):
+
+            create_notification(
+                db,
+                task.assigned_to,
+                message
+            )
+
+    db.commit()
 
     comments = get_comments_by_task(
         db,

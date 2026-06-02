@@ -28,7 +28,7 @@ export default function DashboardAnalytics({
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
 
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
 
         <h3 className="text-sm font-semibold text-gray-500 mb-3">
 
@@ -36,7 +36,7 @@ export default function DashboardAnalytics({
 
         </h3>
 
-        <p className="text-4xl font-bold text-green-600">
+        <p className="text-4xl font-bold text-emerald-700">
 
           {completionRate}%
 
@@ -44,7 +44,7 @@ export default function DashboardAnalytics({
 
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
 
         <h3 className="text-sm font-semibold text-gray-500 mb-3">
 
@@ -52,7 +52,7 @@ export default function DashboardAnalytics({
 
         </h3>
 
-        <p className="text-4xl font-bold text-yellow-600">
+        <p className="text-4xl font-bold text-amber-700">
 
           {pendingTasks}
 
@@ -60,7 +60,7 @@ export default function DashboardAnalytics({
 
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
 
         <h3 className="text-sm font-semibold text-gray-500 mb-3">
 

@@ -53,7 +53,11 @@ class TaskResponse(BaseModel):
 
     assigned_to: int
 
+    assigned_to_name: str | None = None
+
     created_by: int
+
+    created_by_name: str | None = None
 
     created_at: datetime | None = None
 

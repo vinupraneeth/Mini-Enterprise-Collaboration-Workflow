@@ -62,6 +62,7 @@ export default function CreateTaskForm({
           )
 
         setEmployees(
+          response.data.items ||
           response.data
         )
 
@@ -146,20 +147,14 @@ export default function CreateTaskForm({
 
   return (
 
-    <div className="bg-white rounded-2xl shadow-lg p-6">
-
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-
-        Create Task
-
-      </h2>
+    <div>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-5"
+        className="grid grid-cols-1 md:grid-cols-2 gap-5"
       >
 
-        <div>
+        <div className="md:col-span-2">
 
           <label className="block mb-2 font-medium text-gray-700">
 
@@ -176,12 +171,12 @@ export default function CreateTaskForm({
               )
             }
             required
-            className="w-full border rounded-xl px-4 py-3"
+            className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
 
         </div>
 
-        <div>
+        <div className="md:col-span-2">
 
           <label className="block mb-2 font-medium text-gray-700">
 
@@ -197,7 +192,7 @@ export default function CreateTaskForm({
               )
             }
             required
-            className="w-full border rounded-xl px-4 py-3"
+            className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
 
         </div>
@@ -217,7 +212,7 @@ export default function CreateTaskForm({
                 e.target.value
               )
             }
-            className="w-full border rounded-xl px-4 py-3"
+            className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
           >
 
             <option value="low">
@@ -259,12 +254,12 @@ export default function CreateTaskForm({
               )
             }
             required
-            className="w-full border rounded-xl px-4 py-3"
+            className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
 
         </div>
 
-        <div>
+        <div className="md:col-span-2">
 
           <label className="block mb-2 font-medium text-gray-700">
 
@@ -280,7 +275,7 @@ export default function CreateTaskForm({
                 e.target.value
               )
             }
-            className="w-full border rounded-xl px-4 py-3"
+            className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
           >
 
             <option value="">
@@ -316,7 +311,7 @@ export default function CreateTaskForm({
 
         <button
           type="submit"
-          className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 rounded-xl"
+          className="md:col-span-2 w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-xl"
         >
 
           Create Task

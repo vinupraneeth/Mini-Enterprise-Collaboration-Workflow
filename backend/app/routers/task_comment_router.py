@@ -3,6 +3,8 @@ from fastapi import (
     Depends
 )
 
+from fastapi_pagination import Page, paginate
+
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -67,7 +69,7 @@ def create_comment_api(
 
     "/{task_id}/comments",
 
-    response_model=list[
+    response_model=Page[
         TaskCommentResponse
     ]
 )
@@ -82,11 +84,14 @@ def get_comments_api(
     )
 ):
 
-    return fetch_task_comments(
+    return paginate(
 
-        db,
+        fetch_task_comments(
 
-        task_id,
+            db,
 
-        current_user
+            task_id,
+
+            current_user
+        )
     )

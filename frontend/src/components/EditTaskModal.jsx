@@ -70,7 +70,10 @@ export default function EditTaskModal({
           }
         )
 
-      setUsers(response.data)
+      setUsers(
+        response.data.items ||
+        response.data
+      )
 
     } catch (error) {
 

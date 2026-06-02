@@ -84,6 +84,18 @@ function Navbar({
             </Link>
           )}
 
+          {user?.role === "admin" && (
+
+            <Link
+              to="/audit-logs"
+              className="bg-slate-800 hover:bg-slate-900 text-white px-5 py-3 rounded-2xl font-semibold shadow-lg transition"
+            >
+
+              Audit Logs
+
+            </Link>
+          )}
+
           <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg transition"

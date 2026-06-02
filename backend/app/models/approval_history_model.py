@@ -1,10 +1,15 @@
+from datetime import datetime
+
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    ForeignKey,
     DateTime,
+    ForeignKey,
+    String,
     Text
+)
+
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column
 )
 
 from sqlalchemy.sql import func
@@ -16,51 +21,47 @@ class ApprovalHistory(Base):
 
     __tablename__ = "approval_history"
 
-    id = Column(
-        Integer,
+    id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True
     )
 
-    approval_id = Column(
-        Integer,
+    approval_id: Mapped[int] = mapped_column(
         ForeignKey("approvals.id"),
         nullable=False
     )
 
-    action_by = Column(
-        Integer,
+    action_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"),
         nullable=True
     )
 
-    action = Column(
+    action: Mapped[str | None] = mapped_column(
         String(50),
         nullable=True
     )
 
-    old_status = Column(
+    old_status: Mapped[str | None] = mapped_column(
         String(50),
         nullable=True
     )
 
-    new_status = Column(
+    new_status: Mapped[str | None] = mapped_column(
         String(50),
         nullable=True
     )
 
-    changed_by = Column(
-        Integer,
+    changed_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"),
         nullable=True
     )
 
-    comment = Column(
+    comment: Mapped[str | None] = mapped_column(
         Text,
         nullable=True
     )
 
-    created_at = Column(
+    created_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
     )

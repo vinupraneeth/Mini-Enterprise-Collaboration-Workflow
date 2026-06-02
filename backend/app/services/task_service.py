@@ -12,11 +12,15 @@ from app.models.approval_model import (
     Approval
 )
 
+from app.models.approval_history_model import (
+    ApprovalHistory
+)
+
 from app.models.user_model import (
     User
 )
 
-from sqlalchemy import desc
+from sqlalchemy import desc, select
 
 from app.schemas.task_schema import (
     TaskCreate,
@@ -35,6 +39,14 @@ from app.repositories.task_repository import (
     update_task,
 
     delete_task
+)
+
+from app.services.audit_log_service import (
+    create_audit_log
+)
+
+from app.services.notification_service import (
+    create_notification
 )
 
 
@@ -56,6 +68,53 @@ VALID_TRANSITIONS = {
 }
 
 
+def attach_task_user_names(
+    db: Session,
+    tasks
+):
+
+    user_ids = set()
+
+    for task in tasks:
+
+        if task.assigned_to:
+
+            user_ids.add(task.assigned_to)
+
+        if task.created_by:
+
+            user_ids.add(task.created_by)
+
+    if not user_ids:
+
+        return tasks
+
+    users = db.execute(
+        select(User).where(
+            User.id.in_(user_ids)
+        )
+    ).scalars().all()
+
+    user_map = {
+
+        user.id: user.name
+
+        for user in users
+    }
+
+    for task in tasks:
+
+        task.assigned_to_name = user_map.get(
+            task.assigned_to
+        )
+
+        task.created_by_name = user_map.get(
+            task.created_by
+        )
+
+    return tasks
+
+
 def validate_assignment(
 
     db: Session,
@@ -65,9 +124,11 @@ def validate_assignment(
     current_user
 ):
 
-    assigned_user = db.query(User).filter(
-        User.id == assigned_to
-    ).first()
+    assigned_user = db.execute(
+        select(User).where(
+            User.id == assigned_to
+        )
+    ).scalar_one_or_none()
 
     if not assigned_user:
 
@@ -78,20 +139,13 @@ def validate_assignment(
             detail="Assigned user not found"
         )
 
-    if (
-
-        current_user.role == "manager"
-
-        and
-
-        assigned_user.role != "employee"
-    ):
+    if assigned_user.role != "employee":
 
         raise HTTPException(
 
             status_code=403,
 
-            detail="Managers can assign only to employees"
+            detail="Tasks can be assigned only to employees"
         )
 
     return assigned_user
@@ -149,7 +203,7 @@ def create_new_task(
         status="todo"
     )
 
-    return create_task(
+    task = create_task(
 
         db,
 
@@ -157,6 +211,24 @@ def create_new_task(
 
         current_user.id
     )
+
+    create_audit_log(
+        db,
+        current_user.id,
+        "created task",
+        "task",
+        task.id
+    )
+
+    create_notification(
+        db,
+        task.assigned_to,
+        f"You have been assigned task #{task.id}: {task.title}"
+    )
+
+    db.commit()
+
+    return task
 
 
 def fetch_tasks(
@@ -215,17 +287,16 @@ def fetch_tasks(
 
     for task in filtered_tasks:
 
-        latest_approval = db.query(
-            Approval
-        ).filter(
+        latest_approval = db.execute(
+            select(Approval).where(
 
-            Approval.task_id == task.id
+                Approval.task_id == task.id
 
-        ).order_by(
+            ).order_by(
 
-            desc(Approval.id)
-
-        ).first()
+                desc(Approval.id)
+            ).limit(1)
+        ).scalar_one_or_none()
 
         if latest_approval:
 
@@ -243,7 +314,10 @@ def fetch_tasks(
 
             task.approval_remarks = None
 
-    return filtered_tasks
+    return attach_task_user_names(
+        db,
+        filtered_tasks
+    )
 
 
 def fetch_task_by_id(
@@ -271,6 +345,11 @@ def fetch_task_by_id(
                 status_code=403,
                 detail="Not authorized"
             )
+
+    attach_task_user_names(
+        db,
+        [task]
+    )
 
     return task
 
@@ -336,6 +415,20 @@ def assign_task(
 
     task.updated_by = current_user.id
 
+    create_audit_log(
+        db,
+        current_user.id,
+        "assigned task",
+        "task",
+        task.id
+    )
+
+    create_notification(
+        db,
+        task.assigned_to,
+        f"You have been assigned task #{task.id}: {task.title}"
+    )
+
     db.commit()
 
     db.refresh(task)
@@ -398,12 +491,30 @@ def edit_task(
         current_user
     )
 
-    return update_task(
+    task = update_task(
         db,
         task,
         task_data,
         current_user.id
     )
+
+    create_audit_log(
+        db,
+        current_user.id,
+        "updated task",
+        "task",
+        task.id
+    )
+
+    create_notification(
+        db,
+        task.assigned_to,
+        f"Task #{task.id} was updated: {task.title}"
+    )
+
+    db.commit()
+
+    return task
 
 
 def remove_task(
@@ -452,6 +563,16 @@ def remove_task(
 
             detail="Managers can delete only their own tasks"
         )
+
+    create_audit_log(
+        db,
+        current_user.id,
+        "deleted task",
+        "task",
+        task.id
+    )
+
+    db.commit()
 
     return delete_task(
         db,
@@ -536,6 +657,39 @@ def change_task_status(
             "Employees cannot move tasks directly to done"
         )
 
+    if (
+
+        current_status == "review"
+
+        and
+
+        status_data.status == "done"
+    ):
+
+        latest_approval = db.execute(
+            select(Approval).where(
+
+                Approval.task_id == task.id
+
+            ).order_by(
+
+                desc(Approval.id)
+            ).limit(1)
+        ).scalar_one_or_none()
+
+        if (
+            not latest_approval
+            or
+            latest_approval.status != "admin_approved"
+        ):
+
+            raise HTTPException(
+
+                status_code=403,
+
+                detail="Task can move to done only after final admin approval"
+            )
+
     allowed_statuses = (
 
         VALID_TRANSITIONS.get(
@@ -587,6 +741,35 @@ def change_task_status(
 
         db.add(approval)
 
+        db.flush()
+
+        approval_history = ApprovalHistory(
+
+            approval_id=approval.id,
+
+            action_by=current_user.id,
+
+            action="submitted",
+
+            old_status="submitted",
+
+            new_status="submitted",
+
+            changed_by=current_user.id,
+
+            comment="Task moved to review"
+        )
+
+        db.add(approval_history)
+
+        if task.created_by:
+
+            create_notification(
+                db,
+                task.created_by,
+                f"Task #{task.id} is ready for review."
+            )
+
     history = TaskHistory(
 
         task_id=task.id,
@@ -603,6 +786,30 @@ def change_task_status(
 
     db.add(history)
 
+    create_audit_log(
+        db,
+        current_user.id,
+        f"changed task status from {current_status} to {status_data.status}",
+        "task",
+        task.id
+    )
+
+    if task.created_by and task.created_by != current_user.id:
+
+        create_notification(
+            db,
+            task.created_by,
+            f"Task #{task.id} status changed to {status_data.status}."
+        )
+
+    if task.assigned_to and task.assigned_to != current_user.id:
+
+        create_notification(
+            db,
+            task.assigned_to,
+            f"Task #{task.id} status changed to {status_data.status}."
+        )
+
     db.commit()
 
     db.refresh(task)
@@ -611,6 +818,17 @@ def change_task_status(
 
 
 def fetch_task_status_history(db: Session, task_id: int, current_user):
+
+    return db.execute(
+        get_task_status_history_statement(
+            db,
+            task_id,
+            current_user
+        )
+    ).scalars().all()
+
+
+def get_task_status_history_statement(db: Session, task_id: int, current_user):
 
     task = get_task_by_id(db, task_id)
 
@@ -624,8 +842,8 @@ def fetch_task_status_history(db: Session, task_id: int, current_user):
         if task.created_by != current_user.id and task.assigned_to != current_user.id:
             raise HTTPException(status_code=403, detail="Managers can view only related task history")
 
-    return db.query(TaskHistory).filter(
+    return select(TaskHistory).where(
         TaskHistory.task_id == task_id
     ).order_by(
         TaskHistory.created_at.desc()
-    ).all()
+    )

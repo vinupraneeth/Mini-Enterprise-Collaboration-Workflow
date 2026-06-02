@@ -1,3 +1,5 @@
+from sqlalchemy import func, select
+
 from app.models.task_model import Task
 
 from app.models.approval_model import (
@@ -9,6 +11,25 @@ from app.models.task_comment_model import (
 )
 
 
+def count_records(
+    db,
+    model,
+    *conditions
+):
+
+    statement = select(
+        func.count(model.id)
+    )
+
+    if conditions:
+
+        statement = statement.where(
+            *conditions
+        )
+
+    return db.execute(statement).scalar_one()
+
+
 def get_dashboard_analytics(
     db,
     current_user
@@ -16,15 +37,9 @@ def get_dashboard_analytics(
 
     role = current_user.role.lower()
 
-    task_query = db.query(Task)
+    task_conditions = []
 
-    approval_query = db.query(
-        Approval
-    )
-
-    comment_query = db.query(
-        TaskComment
-    )
+    approval_conditions = []
 
     # ADMIN
 
@@ -36,83 +51,94 @@ def get_dashboard_analytics(
 
     elif role == "manager":
 
-        task_query = task_query.filter(
+        task_conditions.append(
             Task.created_by ==
             current_user.id
         )
 
-        approval_query = (
-            approval_query.filter(
-                Approval.reviewed_by ==
-                current_user.id
-            )
+        approval_conditions.append(
+            Approval.reviewed_by ==
+            current_user.id
         )
 
     # EMPLOYEE
 
     elif role == "employee":
 
-        task_query = task_query.filter(
+        task_conditions.append(
             Task.assigned_to ==
             current_user.id
         )
 
-        approval_query = (
-            approval_query.filter(
-                Approval.requested_by ==
-                current_user.id
-            )
+        approval_conditions.append(
+            Approval.requested_by ==
+            current_user.id
         )
 
-    total_tasks = task_query.count()
+    total_tasks = count_records(
+        db,
+        Task,
+        *task_conditions
+    )
 
-    todo_tasks = task_query.filter(
+    todo_tasks = count_records(
+        db,
+        Task,
+        *task_conditions,
         Task.status == "todo"
-    ).count()
-
-    in_progress_tasks = (
-        task_query.filter(
-            Task.status ==
-            "in_progress"
-        ).count()
     )
 
-    review_tasks = (
-        task_query.filter(
-            Task.status ==
-            "review"
-        ).count()
+    in_progress_tasks = count_records(
+        db,
+        Task,
+        *task_conditions,
+        Task.status == "in_progress"
     )
 
-    done_tasks = (
-        task_query.filter(
-            Task.status == "done"
-        ).count()
+    review_tasks = count_records(
+        db,
+        Task,
+        *task_conditions,
+        Task.status == "review"
     )
 
-    pending_approvals = (
-        approval_query.filter(
-            Approval.status ==
-            "pending"
-        ).count()
+    done_tasks = count_records(
+        db,
+        Task,
+        *task_conditions,
+        Task.status == "done"
     )
 
-    approved_approvals = (
-        approval_query.filter(
-            Approval.status ==
-            "approved"
-        ).count()
+    pending_approvals = count_records(
+        db,
+        Approval,
+        *approval_conditions,
+        Approval.status == "pending"
     )
 
-    rejected_approvals = (
-        approval_query.filter(
-            Approval.status ==
-            "rejected"
-        ).count()
+    approved_approvals = count_records(
+        db,
+        Approval,
+        *approval_conditions,
+        Approval.status.in_(
+            [
+                "approved",
+                "manager_approved",
+                "admin_approved"
+            ]
+        )
     )
 
-    total_comments = (
-        comment_query.count()
+    rejected_approvals = count_records(
+        db,
+        Approval,
+        *approval_conditions,
+        Approval.status == "rejected"
+    )
+
+    total_comments = count_records(
+        db,
+        TaskComment
     )
 
     return {
@@ -150,4 +176,74 @@ def get_dashboard_analytics(
 
             "total": total_comments
         }
+    }
+
+
+def get_ai_summary(
+    db,
+    current_user
+):
+
+    role = current_user.role.lower()
+
+    task_conditions = []
+
+    if role == "manager":
+
+        task_conditions.append(
+            Task.created_by ==
+            current_user.id
+        )
+
+    elif role == "employee":
+
+        task_conditions.append(
+            Task.assigned_to ==
+            current_user.id
+        )
+
+    pending_tasks = count_records(
+        db,
+        Task,
+        *task_conditions,
+        Task.status != "done"
+    )
+
+    high_priority_tasks = count_records(
+        db,
+        Task,
+        *task_conditions,
+        Task.priority == "high",
+        Task.status != "done"
+    )
+
+    delayed_tasks = count_records(
+        db,
+        Task,
+        *task_conditions,
+        Task.due_date < func.now(),
+        Task.status != "done"
+    )
+
+    insights = [
+        f"{pending_tasks} pending tasks need attention.",
+        f"{high_priority_tasks} high priority tasks are pending.",
+        f"{delayed_tasks} delayed tasks are past their due date."
+    ]
+
+    if pending_tasks == 0:
+
+        insights.append(
+            "All visible tasks are completed."
+        )
+
+    return {
+
+        "pending_tasks": pending_tasks,
+
+        "high_priority_tasks": high_priority_tasks,
+
+        "delayed_tasks": delayed_tasks,
+
+        "insights": insights
     }
