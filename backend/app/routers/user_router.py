@@ -105,4 +105,15 @@ def get_user_by_id(
             detail="User not found"
         )
 
+    if (
+        current_user.role.lower() != "admin"
+        and
+        current_user.id != user_id
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Users can view only their own profile"
+        )
+
     return user

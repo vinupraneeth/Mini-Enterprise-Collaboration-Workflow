@@ -13,7 +13,9 @@ The project was developed in phases. The first phase focused on authentication, 
 - Backend validation for allowed task status transitions
 - Task status history for tracking workflow changes
 - Public comments and internal notes on tasks
-- Manager and Admin approval workflow
+- Manager and Admin approval workflow with conditional admin escalation
+- General approval requests for items like laptop, leave, or purchase requests
+- Employees and Managers can raise general requests; Admin reviews them directly
 - Approval history with action, comment, reviewer, and status details
 - Dashboard summary, task distribution, analytics, and AI-style summary
 - Document upload, download, and version tracking for tasks

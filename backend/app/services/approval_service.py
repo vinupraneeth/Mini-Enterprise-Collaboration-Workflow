@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 
 from sqlalchemy.orm import Session
 
@@ -33,7 +33,11 @@ def manager_can_access_approval(
 
     if approval.task_id is None:
 
-        return approval.current_level == "manager"
+        return (
+            approval.current_level == "manager"
+            and
+            approval.requested_by != current_user.id
+        )
 
     task = db.execute(
         select(Task).where(
@@ -46,9 +50,13 @@ def manager_can_access_approval(
         return False
 
     return (
-        task.created_by == current_user.id
-        or
-        task.assigned_to == current_user.id
+        approval.requested_by != current_user.id
+        and
+        (
+            task.created_by == current_user.id
+            or
+            task.assigned_to == current_user.id
+        )
     )
 
 
@@ -62,7 +70,11 @@ def create_approval_history(
 
     action: str,
 
-    comment: str | None = None
+    comment: str | None = None,
+
+    old_status: str | None = None,
+
+    new_status: str | None = None
 ):
     history = ApprovalHistory(
 
@@ -72,9 +84,9 @@ def create_approval_history(
 
         action=action,
 
-        old_status=action,
+        old_status=old_status or action,
 
-        new_status=action,
+        new_status=new_status or action,
 
         changed_by=action_by,
         
@@ -156,6 +168,13 @@ def create_approval_request(
 ):
     task = None
 
+    if current_user.role == "admin":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Admin users review approvals and cannot raise approval requests"
+        )
+
     if approval_data.task_id is not None:
         task = db.execute(
             select(Task).where(
@@ -182,6 +201,12 @@ def create_approval_request(
                     detail="Managers can request approval only for related tasks"
                 )
 
+    current_level = "manager"
+
+    if task is None:
+
+        current_level = "admin"
+
     approval = Approval(
 
         title=approval_data.title,
@@ -194,7 +219,7 @@ def create_approval_request(
 
         status="pending",
 
-        current_level="manager",
+        current_level=current_level,
 
         remarks=None
     )
@@ -212,7 +237,11 @@ def create_approval_request(
 
         action="submitted",
 
-        comment="Approval request submitted"
+        comment="Approval request submitted",
+
+        old_status="new",
+
+        new_status=approval.status
     )
 
     create_audit_log(
@@ -230,6 +259,24 @@ def create_approval_request(
             task.created_by,
             f"Approval request submitted for task #{task.id}."
         )
+
+    if task is None and approval.current_level == "admin":
+
+        admins = db.execute(
+            select(User).where(
+                User.role == "admin"
+            )
+        ).scalars().all()
+
+        for admin in admins:
+
+            if admin.id != current_user.id:
+
+                create_notification(
+                    db,
+                    admin.id,
+                    f"New approval request #{approval.id} is waiting for admin review."
+                )
 
     db.commit()
     db.refresh(approval)
@@ -255,22 +302,29 @@ def get_approvals_statement(
 
     if current_user.role == "admin":
 
-        return select(Approval).where(
-            Approval.current_level == "admin"
-        ).order_by(
+        return select(Approval).order_by(
             Approval.created_at.desc()
         )
 
     if current_user.role == "manager":
 
-        return select(Approval).join(
+        return select(Approval).outerjoin(
             Task,
             Approval.task_id == Task.id
         ).where(
-            Approval.current_level == "manager",
             or_(
+                Approval.requested_by == current_user.id,
                 Task.created_by == current_user.id,
-                Task.assigned_to == current_user.id
+                Task.assigned_to == current_user.id,
+                and_(
+                    Approval.task_id.is_(None),
+                    Approval.reviewed_by == current_user.id
+                ),
+                Approval.id.in_(
+                    select(ApprovalHistory.approval_id).where(
+                        ApprovalHistory.action_by == current_user.id
+                    )
+                )
             )
         ).order_by(
             Approval.created_at.desc()
@@ -358,6 +412,8 @@ def review_approval_request(
     approval.reviewed_by = current_user.id
     approval.remarks = comment
 
+    previous_status = approval.status
+
     task = None
 
     if approval.task_id is not None:
@@ -371,7 +427,27 @@ def review_approval_request(
     if approval.current_level == "manager":
         if action == "approve":
             approval.status = "manager_approved"
-            approval.current_level = "admin"
+
+            if (
+                task is None
+                or
+                task.priority == "high"
+            ):
+
+                approval.current_level = "admin"
+
+            else:
+
+                approval.current_level = "completed"
+
+                if task:
+
+                    update_task_status_after_approval(
+                        db,
+                        task,
+                        "done",
+                        current_user
+                    )
 
         elif action == "reject":
             approval.status = "rejected"
@@ -427,7 +503,9 @@ def review_approval_request(
         approval_id=approval.id,
         action_by=current_user.id,
         action=action,
-        comment=comment
+        comment=comment,
+        old_status=previous_status,
+        new_status=approval.status
     )
 
     action_labels = {
@@ -533,10 +611,14 @@ def get_approval_history_statement(
 
     if current_user.role == "manager":
 
-        if not manager_can_access_approval(
-            db,
-            approval,
-            current_user
+        if (
+            approval.requested_by != current_user.id
+            and
+            not manager_can_access_approval(
+                db,
+                approval,
+                current_user
+            )
         ):
 
             raise HTTPException(

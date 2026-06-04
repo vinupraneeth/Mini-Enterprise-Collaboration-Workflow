@@ -32,6 +32,9 @@ export default function DashboardPage() {
   const [loading, setLoading] =
     useState(true)
 
+  const [analytics, setAnalytics] =
+    useState(null)
+
   const [isModalOpen, setIsModalOpen] =
     useState(false)
 
@@ -47,6 +50,33 @@ export default function DashboardPage() {
   const user = storedUser
     ? JSON.parse(storedUser)
     : null
+
+
+  const fetchDashboardAnalytics =
+    async () => {
+
+      try {
+
+        const response =
+          await axios.get(
+
+            "http://127.0.0.1:8000/dashboard/analytics",
+
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`
+              }
+            }
+          )
+
+        setAnalytics(response.data)
+
+      } catch (error) {
+
+        console.error(error)
+      }
+    }
 
 
   const fetchTasks = async () => {
@@ -70,6 +100,8 @@ export default function DashboardPage() {
         response.data.items ||
         response.data
       )
+
+      fetchDashboardAnalytics()
 
     } catch (error) {
 
@@ -138,6 +170,8 @@ export default function DashboardPage() {
           )
         )
 
+        fetchDashboardAnalytics()
+
       } catch (error) {
 
         console.error(error)
@@ -200,6 +234,8 @@ export default function DashboardPage() {
           )
         )
 
+        fetchDashboardAnalytics()
+
       } catch (error) {
 
         console.error(error)
@@ -248,9 +284,9 @@ export default function DashboardPage() {
         handleLogout={handleLogout}
       />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 
           <div>
 
@@ -276,7 +312,7 @@ export default function DashboardPage() {
               className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition"
             >
 
-              + Create Task
+              Create Task
 
             </button>
           )}
@@ -285,19 +321,47 @@ export default function DashboardPage() {
         <TaskStatsCards
           stats={stats}
         />
-        <DashboardAnalytics
-          stats={stats}
-        />
 
-        <AiSummaryPanel />
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 mt-6 items-start">
 
-        <NotificationsPanel
-          user={user}
-        />
+          <div className="space-y-6 min-w-0">
 
-        <ActivityFeedPanel />
+            <DashboardAnalytics
+              stats={stats}
+              analytics={analytics}
+            />
 
-        <div className="mt-10">
+            <AiSummaryPanel />
+
+          </div>
+
+          <NotificationsPanel
+            user={user}
+          />
+
+        </div>
+
+        <div className="mt-8">
+
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+
+            <div>
+
+              <h2 className="text-2xl font-bold text-slate-900">
+
+                Task Board
+
+              </h2>
+
+              <p className="text-sm text-slate-500 mt-1">
+
+                Track assigned work from creation to completion
+
+              </p>
+
+            </div>
+
+          </div>
 
           {loading ? (
 
@@ -325,6 +389,8 @@ export default function DashboardPage() {
             />
           )}
         </div>
+
+        <ActivityFeedPanel />
       </div>
 
       {isModalOpen && !editingTask && (

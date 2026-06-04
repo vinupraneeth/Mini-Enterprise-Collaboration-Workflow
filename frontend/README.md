@@ -21,6 +21,8 @@ This folder contains the React frontend for the Mini Enterprise Collaboration Wo
 - Edit task modal
 - Task comments
 - Approvals page
+- General approval request form
+- My requests and approval records view
 - Task documents modal
 - Notifications panel
 - Activity feed panel
@@ -32,6 +34,7 @@ This folder contains the React frontend for the Mini Enterprise Collaboration Wo
 Admin:
 - Can view all tasks
 - Can review final approval requests
+- Cannot create general approval requests
 - Can view dashboard information
 - Can open audit logs
 - Can see wider workflow activity
@@ -40,6 +43,7 @@ Manager:
 - Can create and assign tasks to employees
 - Can manage tasks related to them
 - Can review manager-level approval requests
+- Can raise general approval requests
 - Can add public comments and internal notes
 - Can view related documents, notifications, and activity
 
@@ -49,6 +53,7 @@ Employee:
 - Can add public comments
 - Can upload and download documents for assigned tasks
 - Can view related notifications and activity
+- Can raise general approval requests
 - Cannot create internal notes or review approvals
 
 ## Setup

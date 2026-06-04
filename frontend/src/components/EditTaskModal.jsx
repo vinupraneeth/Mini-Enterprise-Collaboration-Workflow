@@ -25,7 +25,11 @@ export default function EditTaskModal({
 
   const [dueDate,
   setDueDate] =
-  useState("")
+  useState(
+    task.due_date
+      ? task.due_date.slice(0, 16)
+      : ""
+  )
 
   const [assignedTo,
     setAssignedTo] =
@@ -137,7 +141,7 @@ export default function EditTaskModal({
 
             priority,
 
-            due_date: dueDate,
+            due_date: dueDate || null,
 
             status: task.status,
 
@@ -281,6 +285,26 @@ export default function EditTaskModal({
 
               </option>
             </select>
+          </div>
+
+          <div>
+
+            <label className="block mb-2 font-medium text-gray-700">
+
+              Due Date
+
+            </label>
+
+            <input
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) =>
+                setDueDate(
+                  e.target.value
+                )
+              }
+              className="w-full border rounded-xl px-4 py-3"
+            />
           </div>
 
           <div>

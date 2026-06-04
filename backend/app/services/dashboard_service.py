@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 
 from app.models.task_model import Task
 
@@ -30,6 +30,152 @@ def count_records(
     return db.execute(statement).scalar_one()
 
 
+def get_task_conditions(current_user):
+
+    role = current_user.role.lower()
+
+    if role == "manager":
+
+        return [
+            or_(
+                Task.created_by == current_user.id,
+                Task.assigned_to == current_user.id
+            )
+        ]
+
+    if role == "employee":
+
+        return [
+            Task.assigned_to == current_user.id
+        ]
+
+    return []
+
+
+def get_visible_task_ids(
+    db,
+    current_user,
+    *task_conditions
+):
+
+    statement = select(Task.id)
+
+    if task_conditions:
+
+        statement = statement.where(
+            *task_conditions
+        )
+
+    return db.execute(
+        statement
+    ).scalars().all()
+
+
+def count_visible_comments(
+    db,
+    current_user,
+    *task_conditions
+):
+
+    if current_user.role.lower() == "admin":
+
+        return count_records(
+            db,
+            TaskComment
+        )
+
+    task_ids = get_visible_task_ids(
+        db,
+        current_user,
+        *task_conditions
+    )
+
+    if not task_ids:
+
+        return 0
+
+    comment_conditions = [
+        TaskComment.task_id.in_(task_ids)
+    ]
+
+    if current_user.role.lower() == "employee":
+
+        comment_conditions.append(
+            TaskComment.is_internal.is_(False)
+        )
+
+    return count_records(
+        db,
+        TaskComment,
+        *comment_conditions
+    )
+
+
+def count_pending_approvals(
+    db,
+    current_user
+):
+
+    role = current_user.role.lower()
+
+    active_statuses = [
+        "pending",
+        "manager_approved",
+        "hold"
+    ]
+
+    statement = select(
+        func.count(Approval.id)
+    )
+
+    if role == "admin":
+
+        statement = statement.where(
+            Approval.current_level == "admin",
+            Approval.status.in_(
+                active_statuses
+            )
+        )
+
+    elif role == "manager":
+
+        statement = statement.outerjoin(
+            Task,
+            Approval.task_id == Task.id
+        ).where(
+            Approval.current_level == "manager",
+            Approval.requested_by != current_user.id,
+            Approval.status.in_(
+                [
+                    "pending",
+                    "hold"
+                ]
+            ),
+            or_(
+                Task.created_by == current_user.id,
+                Task.assigned_to == current_user.id
+            )
+        )
+
+    elif role == "employee":
+
+        statement = statement.where(
+            Approval.requested_by == current_user.id,
+            Approval.current_level != "completed",
+            Approval.status.in_(
+                active_statuses
+            )
+        )
+
+    else:
+
+        return 0
+
+    return db.execute(
+        statement
+    ).scalar_one()
+
+
 def get_dashboard_analytics(
     db,
     current_user
@@ -51,9 +197,10 @@ def get_dashboard_analytics(
 
     elif role == "manager":
 
-        task_conditions.append(
-            Task.created_by ==
-            current_user.id
+        task_conditions.extend(
+            get_task_conditions(
+                current_user
+            )
         )
 
         approval_conditions.append(
@@ -65,9 +212,10 @@ def get_dashboard_analytics(
 
     elif role == "employee":
 
-        task_conditions.append(
-            Task.assigned_to ==
-            current_user.id
+        task_conditions.extend(
+            get_task_conditions(
+                current_user
+            )
         )
 
         approval_conditions.append(
@@ -109,11 +257,9 @@ def get_dashboard_analytics(
         Task.status == "done"
     )
 
-    pending_approvals = count_records(
+    pending_approvals = count_pending_approvals(
         db,
-        Approval,
-        *approval_conditions,
-        Approval.status == "pending"
+        current_user
     )
 
     approved_approvals = count_records(
@@ -136,9 +282,10 @@ def get_dashboard_analytics(
         Approval.status == "rejected"
     )
 
-    total_comments = count_records(
+    total_comments = count_visible_comments(
         db,
-        TaskComment
+        current_user,
+        *task_conditions
     )
 
     return {
@@ -186,21 +333,9 @@ def get_ai_summary(
 
     role = current_user.role.lower()
 
-    task_conditions = []
-
-    if role == "manager":
-
-        task_conditions.append(
-            Task.created_by ==
-            current_user.id
-        )
-
-    elif role == "employee":
-
-        task_conditions.append(
-            Task.assigned_to ==
-            current_user.id
-        )
+    task_conditions = get_task_conditions(
+        current_user
+    )
 
     pending_tasks = count_records(
         db,

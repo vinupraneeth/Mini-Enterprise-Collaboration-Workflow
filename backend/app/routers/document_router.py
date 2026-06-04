@@ -4,6 +4,7 @@ from fastapi import (
     APIRouter,
     Depends,
     File,
+    HTTPException,
     UploadFile
 )
 
@@ -29,6 +30,10 @@ from app.services.document_service import (
     fetch_document_by_id,
     get_documents_by_task_statement,
     upload_document
+)
+
+from app.services.audit_log_service import (
+    create_audit_log
 )
 
 
@@ -87,6 +92,23 @@ def download_document_api(
     )
 
     path = Path(document.file_path)
+
+    if not path.exists():
+
+        raise HTTPException(
+            status_code=404,
+            detail="Document file not found"
+        )
+
+    create_audit_log(
+        db,
+        current_user.id,
+        "downloaded document",
+        "document",
+        document.id
+    )
+
+    db.commit()
 
     return FileResponse(
         path,

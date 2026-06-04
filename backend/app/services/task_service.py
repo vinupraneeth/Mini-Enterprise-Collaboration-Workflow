@@ -572,8 +572,6 @@ def remove_task(
         task.id
     )
 
-    db.commit()
-
     return delete_task(
         db,
         task
@@ -659,6 +657,26 @@ def change_task_status(
 
     if (
 
+        status_data.status == "review"
+
+        and
+
+        (
+            current_user.role != "employee"
+            or
+            task.assigned_to != current_user.id
+        )
+    ):
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail="Only the assigned employee can submit a task for review"
+        )
+
+    if (
+
         current_status == "review"
 
         and
@@ -680,14 +698,19 @@ def change_task_status(
         if (
             not latest_approval
             or
-            latest_approval.status != "admin_approved"
+            latest_approval.current_level != "completed"
+            or
+            latest_approval.status not in [
+                "manager_approved",
+                "admin_approved"
+            ]
         ):
 
             raise HTTPException(
 
                 status_code=403,
 
-                detail="Task can move to done only after final admin approval"
+                detail="Task can move to done only after approval is completed"
             )
 
     allowed_statuses = (
@@ -722,6 +745,18 @@ def change_task_status(
 
     if status_data.status == "review":
 
+        creator = db.execute(
+            select(User).where(
+                User.id == task.created_by
+            )
+        ).scalar_one_or_none()
+
+        approval_level = (
+            "admin"
+            if creator and creator.role == "admin"
+            else "manager"
+        )
+
         approval = Approval(
 
             title=f"Approval request for task #{task.id}",
@@ -736,7 +771,7 @@ def change_task_status(
 
             status="pending",
 
-            current_level="manager"
+            current_level=approval_level
         )
 
         db.add(approval)

@@ -30,6 +30,12 @@ export default function NotificationsPanel({
         ? "Recent team workflow updates"
         : "Recent updates assigned to you"
 
+  const unreadCount =
+    notifications.filter(
+      (notification) =>
+        !notification.is_read
+    ).length
+
 
   const fetchNotifications =
     async () => {
@@ -102,25 +108,31 @@ export default function NotificationsPanel({
 
   return (
 
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 mt-8">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 xl:sticky xl:top-6">
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between gap-4 mb-5">
 
         <div>
 
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-slate-900">
 
             Notifications
 
           </h2>
 
-          <p className="text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
 
             {subtitle}
 
           </p>
 
         </div>
+
+        <span className="bg-slate-100 text-slate-700 border border-slate-200 rounded-full px-3 py-1 text-xs font-semibold">
+
+          {unreadCount} unread
+
+        </span>
 
       </div>
 
@@ -134,14 +146,14 @@ export default function NotificationsPanel({
 
       ) : notifications.length > 0 ? (
 
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1 nice-scrollbar">
 
           {notifications.slice(0, 6).map(
             (notification) => (
 
               <div
                 key={notification.id}
-                className={`border rounded-xl px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 ${
+                className={`border rounded-lg px-4 py-3 flex flex-col gap-3 ${
                   notification.is_read
                     ? "bg-slate-50 border-slate-200"
                     : "bg-blue-50 border-blue-100"
@@ -150,7 +162,7 @@ export default function NotificationsPanel({
 
                 <div>
 
-                  <p className="text-gray-800 font-medium">
+                  <p className="text-sm text-gray-800 font-medium leading-5">
 
                     {notification.message}
 

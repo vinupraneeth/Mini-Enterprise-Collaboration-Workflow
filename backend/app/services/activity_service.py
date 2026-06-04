@@ -78,17 +78,21 @@ def fetch_activity_feed(
 
         if not visible_task_ids:
 
-            return []
+            task_history = []
 
-        task_history_statement = task_history_statement.where(
-            TaskHistory.task_id.in_(
-                visible_task_ids
+        else:
+
+            task_history_statement = task_history_statement.where(
+                TaskHistory.task_id.in_(
+                    visible_task_ids
+                )
             )
-        )
 
-    task_history = db.execute(
-        task_history_statement
-    ).scalars().all()
+    if visible_task_ids is None or visible_task_ids:
+
+        task_history = db.execute(
+            task_history_statement
+        ).scalars().all()
 
     for item in task_history:
 
@@ -107,23 +111,29 @@ def fetch_activity_feed(
         select(TaskComment)
     )
 
-    if visible_task_ids is not None:
+    if visible_task_ids == []:
 
-        comment_statement = comment_statement.where(
-            TaskComment.task_id.in_(
-                visible_task_ids
+        comments = []
+
+    else:
+
+        if visible_task_ids is not None:
+
+            comment_statement = comment_statement.where(
+                TaskComment.task_id.in_(
+                    visible_task_ids
+                )
             )
-        )
 
-    if current_user.role == "employee":
+        if current_user.role == "employee":
 
-        comment_statement = comment_statement.where(
-            TaskComment.is_internal.is_(False)
-        )
+            comment_statement = comment_statement.where(
+                TaskComment.is_internal.is_(False)
+            )
 
-    comments = db.execute(
-        comment_statement
-    ).scalars().all()
+        comments = db.execute(
+            comment_statement
+        ).scalars().all()
 
     for item in comments:
 
@@ -149,14 +159,30 @@ def fetch_activity_feed(
         select(ApprovalHistory)
     )
 
-    if visible_task_ids is not None:
+    if current_user.role != "admin":
 
         approval_history_statement = approval_history_statement.join(
             Approval,
             ApprovalHistory.approval_id == Approval.id
-        ).where(
-            Approval.task_id.in_(
-                visible_task_ids
+        )
+
+        visibility_conditions = [
+            Approval.requested_by == current_user.id,
+            Approval.reviewed_by == current_user.id,
+            ApprovalHistory.action_by == current_user.id
+        ]
+
+        if visible_task_ids:
+
+            visibility_conditions.append(
+                Approval.task_id.in_(
+                    visible_task_ids
+                )
+            )
+
+        approval_history_statement = approval_history_statement.where(
+            or_(
+                *visibility_conditions
             )
         )
 

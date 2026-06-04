@@ -50,6 +50,8 @@ class TokenResponse(BaseModel):
 
     token_type: str
 
+    id: int
+
     role: str
 
     name: str

@@ -35,21 +35,21 @@ const cards = [
 
   return (
 
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
 
       {
         cards.map((card) => (
 
           <div
             key={card.title}
-            className={`bg-gradient-to-r ${card.color} rounded-3xl p-6 text-white shadow-xl`}
+            className={`bg-gradient-to-r ${card.color} rounded-xl p-5 text-white shadow-sm`}
           >
 
             <p className="text-sm opacity-90">
               {card.title}
             </p>
 
-            <h2 className="text-5xl font-bold mt-4">
+            <h2 className="text-4xl font-bold mt-3">
               {card.value}
             </h2>
 

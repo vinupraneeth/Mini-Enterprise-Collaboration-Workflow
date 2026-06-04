@@ -100,16 +100,14 @@ def validate_file(
 
 def get_next_document_version(
     db: Session,
-    task_id: int,
-    file_name: str
+    task_id: int
 ):
 
     latest_version = db.execute(
         select(
             func.max(Document.version)
         ).where(
-            Document.task_id == task_id,
-            Document.file_name == file_name
+            Document.task_id == task_id
         )
     ).scalar_one()
 
@@ -143,8 +141,7 @@ def upload_document(
 
     version = get_next_document_version(
         db,
-        task_id,
-        file_name
+        task_id
     )
 
     task_folder = UPLOAD_ROOT / f"task_{task_id}"

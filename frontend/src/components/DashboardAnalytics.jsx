@@ -1,6 +1,8 @@
 export default function DashboardAnalytics({
 
-  stats
+  stats,
+
+  analytics
 
 }) {
 
@@ -22,6 +24,9 @@ export default function DashboardAnalytics({
         )
 
       : 0
+
+  const pendingApprovals =
+    analytics?.approvals?.pending ?? 0
 
 
   return (
@@ -64,13 +69,13 @@ export default function DashboardAnalytics({
 
         <h3 className="text-sm font-semibold text-gray-500 mb-3">
 
-          Tasks Under Review
+          Pending Approvals
 
         </h3>
 
         <p className="text-4xl font-bold text-indigo-600">
 
-          {stats.review}
+          {pendingApprovals}
 
         </p>
 

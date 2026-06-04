@@ -70,9 +70,7 @@ function Navbar({
 
           </Link>
 
-          {(user?.role === "admin" ||
-
-            user?.role === "manager") && (
+          {user && (
 
             <Link
               to="/approvals"

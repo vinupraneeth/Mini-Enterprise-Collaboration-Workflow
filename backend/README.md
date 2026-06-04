@@ -52,7 +52,11 @@ Comments:
 
 Approvals:
 - Tasks submitted for review create approval requests
-- Manager reviews first, then Admin gives final approval
+- Manager reviews first, then Admin gives final approval when required
+- High priority task approvals are escalated to Admin after Manager approval
+- General approval requests can be raised without linking to a task
+- General approval requests are sent directly to Admin
+- Admin users review approval requests instead of raising them
 - Supported actions are `approve`, `reject`, and `hold`
 - Rejection requires a comment
 - Approval actions are saved in approval history
@@ -208,6 +212,16 @@ Approval action:
 {
   "action": "approve",
   "comment": "Reviewed and approved."
+}
+```
+
+General approval request:
+
+```json
+{
+  "title": "Laptop request",
+  "description": "Need a laptop for project work.",
+  "task_id": null
 }
 ```
 

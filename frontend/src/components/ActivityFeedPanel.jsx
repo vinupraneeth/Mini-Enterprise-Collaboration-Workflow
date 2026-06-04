@@ -81,21 +81,25 @@ export default function ActivityFeedPanel() {
 
   return (
 
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 mt-8">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mt-8">
 
-      <div className="mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
 
-        <h2 className="text-2xl font-bold text-slate-900">
+        <div>
 
-          Activity Feed
+          <h2 className="text-2xl font-bold text-slate-900">
 
-        </h2>
+            Activity Feed
 
-        <p className="text-slate-500 mt-1">
+          </h2>
 
-          Recent workflow activity visible to your role
+          <p className="text-sm text-slate-500 mt-1">
 
-        </p>
+            Recent workflow activity visible to your role
+
+          </p>
+
+        </div>
 
       </div>
 
@@ -109,14 +113,14 @@ export default function ActivityFeedPanel() {
 
       ) : activities.length > 0 ? (
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
           {activities.map(
             (activity, index) => (
 
               <div
                 key={`${activity.type}-${activity.created_at}-${index}`}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
               >
 
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">

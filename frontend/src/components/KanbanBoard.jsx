@@ -404,13 +404,23 @@ function KanbanBoard({
       }
     >
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
         {Object.entries(columns)
           .map(
 
             ([status,
-              title]) => (
+              title]) => {
+
+              const statusTasks =
+                tasks.filter(
+                  (task) =>
+
+                    task.status
+                    === status
+                )
+
+              return (
 
               <Droppable
                 droppableId={
@@ -426,24 +436,28 @@ function KanbanBoard({
                       provided.innerRef
                     }
                     {...provided.droppableProps}
-                    className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm min-h-[520px]"
+                    className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm min-h-[520px]"
                   >
 
-                    <h2 className="text-sm font-bold text-slate-700 tracking-wide mb-4">
+                    <div className="flex items-center justify-between mb-4">
 
-                      {title}
+                      <h2 className="text-sm font-bold text-slate-700 tracking-wide">
 
-                    </h2>
+                        {title}
 
-                    <div className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
+                      </h2>
 
-                      {tasks
-                        .filter(
-                          (task) =>
+                      <span className="bg-slate-100 text-slate-600 border border-slate-200 rounded-full px-2.5 py-1 text-xs font-semibold">
 
-                            task.status
-                            === status
-                        )
+                        {statusTasks.length}
+
+                      </span>
+
+                    </div>
+
+                    <div className="space-y-3 max-h-[68vh] min-h-[440px] overflow-y-auto pr-1 nice-scrollbar">
+
+                      {statusTasks
                         .map(
                           (
                             task,
@@ -943,6 +957,7 @@ function KanbanBoard({
 
               </Droppable>
             )
+            }
           )}
 
       </div>

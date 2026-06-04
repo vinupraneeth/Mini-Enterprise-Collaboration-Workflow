@@ -110,6 +110,8 @@ def login_user(
 
         "token_type": "bearer",
 
+        "id": user.id,
+
         "name": user.name,
 
         "role": user.role

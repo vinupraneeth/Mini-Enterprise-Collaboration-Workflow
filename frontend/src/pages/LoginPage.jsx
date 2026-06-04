@@ -88,6 +88,8 @@ function LoginPage() {
 
         JSON.stringify({
 
+          id: response.data.id,
+
           name: response.data.name,
 
           email: email,
