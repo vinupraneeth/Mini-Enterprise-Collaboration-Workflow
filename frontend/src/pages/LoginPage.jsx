@@ -21,6 +21,9 @@ function LoginPage() {
   const [loading, setLoading] =
     useState(false);
 
+  const [googleConfigured, setGoogleConfigured] =
+    useState(false);
+
   const navigate = useNavigate();
 
 
@@ -35,7 +38,35 @@ function LoginPage() {
       navigate("/dashboard");
     }
 
+    fetchGoogleStatus();
+
   }, []);
+
+
+  const fetchGoogleStatus = async () => {
+
+    try {
+
+      const response = await api.get(
+        "/auth/google/status"
+      );
+
+      setGoogleConfigured(
+        response.data.configured
+      );
+
+    } catch (error) {
+
+      console.error(error);
+    }
+  };
+
+
+  const handleGoogleLogin = () => {
+
+    window.location.href =
+      `${api.defaults.baseURL}/auth/google`;
+  };
 
 
   const handleLogin = async (
@@ -80,6 +111,13 @@ function LoginPage() {
         "token",
 
         response.data.access_token
+      );
+
+      localStorage.setItem(
+
+        "refresh_token",
+
+        response.data.refresh_token
       );
       
       localStorage.setItem(
@@ -202,6 +240,20 @@ function LoginPage() {
 
             </div>
 
+            <div className="text-right">
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/forgot-password")
+                }
+                className="text-sm text-slate-900 font-semibold hover:underline"
+              >
+                Forgot password?
+              </button>
+
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -219,6 +271,42 @@ function LoginPage() {
             </button>
 
           </form>
+
+          <div className="mt-5">
+
+            <div className="flex items-center gap-3 mb-5">
+
+              <div className="h-px bg-slate-200 flex-1" />
+
+              <span className="text-xs uppercase text-slate-400 font-semibold">
+                or
+              </span>
+
+              <div className="h-px bg-slate-200 flex-1" />
+
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={!googleConfigured}
+              className={`w-full border py-3 rounded-lg font-semibold transition ${
+                googleConfigured
+                  ? "border-slate-300 text-slate-800 hover:bg-slate-50"
+                  : "border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed"
+              }`}
+            >
+              Continue with Google
+            </button>
+
+            {!googleConfigured && (
+
+              <p className="text-xs text-slate-500 text-center mt-3 leading-5">
+                Google OAuth requires credentials in backend environment settings.
+              </p>
+            )}
+
+          </div>
 
           <div className="mt-6 text-center text-slate-600">
 

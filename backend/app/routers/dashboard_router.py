@@ -9,7 +9,9 @@ from app.db.deps import get_db
 
 from app.services.dashboard_service import (
     get_dashboard_analytics,
-    get_ai_summary
+    get_ai_summary,
+    get_role_dashboard,
+    get_smart_assignment
 )
 
 from app.core.dependencies import (
@@ -17,7 +19,8 @@ from app.core.dependencies import (
 )
 
 from app.schemas.dashboard_schema import (
-    AiSummaryResponse
+    AiSummaryResponse,
+    SmartAssignmentResponse
 )
 
 
@@ -90,6 +93,43 @@ def dashboard_ai_summary_api(
 ):
 
     return get_ai_summary(
+        db,
+        current_user
+    )
+
+
+@router.get(
+    "/role-view"
+)
+def dashboard_role_view_api(
+
+    db: Session = Depends(get_db),
+
+    current_user = Depends(
+        get_current_user
+    )
+):
+
+    return get_role_dashboard(
+        db,
+        current_user
+    )
+
+
+@router.get(
+    "/smart-assignment",
+    response_model=SmartAssignmentResponse
+)
+def dashboard_smart_assignment_api(
+
+    db: Session = Depends(get_db),
+
+    current_user = Depends(
+        get_current_user
+    )
+):
+
+    return get_smart_assignment(
         db,
         current_user
     )

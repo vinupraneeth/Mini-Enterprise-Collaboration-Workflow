@@ -1,41 +1,131 @@
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator
+)
 
 from datetime import datetime
+
+from app.utils.sanitization import (
+    require_clean_text,
+    sanitize_text
+)
 
 
 class TaskCreate(BaseModel):
 
-    title: str
+    title: str = Field(
+        min_length=1,
+        max_length=255
+    )
 
-    description: str
+    description: str = Field(
+        min_length=1,
+        max_length=2000
+    )
 
-    priority: str
+    priority: Literal[
+        "low",
+        "medium",
+        "high"
+    ] = "medium"
 
     due_date: datetime | None = None
 
-    assigned_to: int
+    assigned_to: int = Field(
+        gt=0
+    )
+
+
+    @field_validator(
+        "title"
+    )
+    @classmethod
+    def clean_title(cls, value):
+
+        return require_clean_text(
+            value,
+            "Title"
+        )
+
+
+    @field_validator(
+        "description"
+    )
+    @classmethod
+    def clean_description(cls, value):
+
+        return require_clean_text(
+            value,
+            "Description"
+        )
 
 
 class TaskUpdate(BaseModel):
 
-    title: str
+    title: str = Field(
+        min_length=1,
+        max_length=255
+    )
 
-    description: str
+    description: str = Field(
+        min_length=1,
+        max_length=2000
+    )
 
-    priority: str
+    priority: Literal[
+        "low",
+        "medium",
+        "high"
+    ]
 
     due_date: datetime | None = None
 
-    assigned_to: int
+    assigned_to: int = Field(
+        gt=0
+    )
+
+
+    @field_validator(
+        "title"
+    )
+    @classmethod
+    def clean_update_title(cls, value):
+
+        return require_clean_text(
+            value,
+            "Title"
+        )
+
+
+    @field_validator(
+        "description"
+    )
+    @classmethod
+    def clean_update_description(cls, value):
+
+        return require_clean_text(
+            value,
+            "Description"
+        )
 
 
 class TaskStatusUpdate(BaseModel):
 
-    status: str
+    status: Literal[
+        "todo",
+        "in_progress",
+        "review",
+        "done"
+    ]
 
 class TaskAssign(BaseModel):
 
-    assigned_to: int
+    assigned_to: int = Field(
+        gt=0
+    )
 
 class TaskResponse(BaseModel):
 

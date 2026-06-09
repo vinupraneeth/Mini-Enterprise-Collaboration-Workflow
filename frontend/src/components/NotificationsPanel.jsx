@@ -8,7 +8,11 @@ import axios from "axios"
 
 export default function NotificationsPanel({
 
-  user
+  id,
+
+  user,
+
+  refreshKey
 
 }) {
 
@@ -75,7 +79,7 @@ export default function NotificationsPanel({
 
     fetchNotifications()
 
-  }, [])
+  }, [refreshKey])
 
 
   const markAsRead =
@@ -108,7 +112,10 @@ export default function NotificationsPanel({
 
   return (
 
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 xl:sticky xl:top-6">
+    <div
+      id={id}
+      className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 xl:sticky xl:top-6 scroll-mt-6"
+    >
 
       <div className="flex items-start justify-between gap-4 mb-5">
 

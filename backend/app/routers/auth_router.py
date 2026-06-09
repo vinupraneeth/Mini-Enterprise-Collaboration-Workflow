@@ -1,6 +1,7 @@
 from fastapi import (
     APIRouter,
-    Depends
+    Depends,
+    Request
 )
 
 from fastapi.security import (
@@ -15,12 +16,26 @@ from app.schemas.user_schema import (
     UserCreate,
     UserResponse,
     LoginRequest,
-    TokenResponse
+    TokenResponse,
+    RefreshTokenRequest,
+    PasswordResetRequest,
+    PasswordResetRequestResponse,
+    PasswordResetConfirm,
+    PasswordResetConfirmResponse
 )
 
 from app.services.user_service import (
     register_user,
-    login_user
+    login_user,
+    refresh_access_token,
+    request_password_reset,
+    confirm_password_reset
+)
+
+from app.services.oauth_service import (
+    get_google_oauth_status,
+    google_login_redirect,
+    google_callback
 )
 
 from app.core.dependencies import (
@@ -68,6 +83,90 @@ def login(
     return login_user(
         db,
         login_data
+    )
+
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponse
+)
+def refresh_token(
+    token_data: RefreshTokenRequest,
+    db: Session = Depends(get_db)
+):
+
+    return refresh_access_token(
+        db,
+        token_data
+    )
+
+
+@router.post(
+    "/password-reset/request",
+    response_model=PasswordResetRequestResponse
+)
+def password_reset_request(
+    reset_data: PasswordResetRequest,
+    db: Session = Depends(get_db)
+):
+
+    return request_password_reset(
+        db,
+        reset_data
+    )
+
+
+@router.post(
+    "/password-reset/confirm",
+    response_model=PasswordResetConfirmResponse
+)
+def password_reset_confirm(
+    reset_data: PasswordResetConfirm,
+    db: Session = Depends(get_db)
+):
+
+    return confirm_password_reset(
+        db,
+        reset_data
+    )
+
+
+@router.get(
+    "/google/status"
+)
+def google_status():
+
+    return get_google_oauth_status()
+
+
+@router.get(
+    "/google"
+)
+def google_login(
+    request: Request
+):
+
+    return google_login_redirect(
+        request
+    )
+
+
+@router.get(
+    "/google/callback",
+    name="google_oauth_callback"
+)
+def google_oauth_callback(
+    request: Request,
+    code: str,
+    state: str,
+    db: Session = Depends(get_db)
+):
+
+    return google_callback(
+        request,
+        db,
+        code,
+        state
     )
 
 

@@ -1,6 +1,6 @@
 # Frontend - Mini Enterprise Collaboration Workflow
 
-This folder contains the React frontend for the Mini Enterprise Collaboration Workflow project. It connects with the FastAPI backend and provides the screens used for login, task management, Kanban workflow, approvals, comments, documents, notifications, audit logs, and dashboard updates.
+This folder contains the React frontend for the Mini Enterprise Collaboration Workflow project. It connects with the FastAPI backend and provides the screens used for login, task management, Kanban workflow, approvals, comments, documents, notifications, audit logs, dashboard updates, intelligent insights, and subscription management.
 
 ## Tech Stack
 
@@ -27,7 +27,11 @@ This folder contains the React frontend for the Mini Enterprise Collaboration Wo
 - Notifications panel
 - Activity feed panel
 - AI summary panel
+- Role dashboard panel
+- Smart assignment panel
 - Admin audit logs page
+- Admin subscription page
+- Razorpay checkout flow for paid plans
 
 ## Role-Based UI
 
@@ -38,6 +42,8 @@ Admin:
 - Can view dashboard information
 - Can open audit logs
 - Can see wider workflow activity
+- Can open the Subscription page
+- Can choose Basic, Silver, or Gold plans through Razorpay checkout
 
 Manager:
 - Can create and assign tasks to employees
@@ -90,4 +96,6 @@ npm run build
 
 The frontend stores the JWT token in local storage after login and sends it with authenticated API requests.
 
-Document upload and download are handled from the task documents modal. Dashboard panels show summary, notifications, and activity based on the logged-in user's role.
+Document upload and download are handled from the task documents modal. Dashboard panels show summary, notifications, activity, AI insights, role-specific actions, and smart assignment suggestions based on the logged-in user's role.
+
+The Subscription page is available to Admin users from the top navigation. Paid plans open Razorpay Checkout when Razorpay test or live keys are configured in the backend environment.

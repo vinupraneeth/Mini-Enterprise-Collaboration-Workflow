@@ -178,6 +178,67 @@ export default function AiSummaryPanel() {
 
       </div>
 
+      {summary.delay_risks?.length > 0 && (
+
+        <div className="mt-6">
+
+          <h3 className="text-lg font-bold text-slate-900 mb-3">
+
+            Delay Risk Tasks
+
+          </h3>
+
+          <div className="space-y-3">
+
+            {summary.delay_risks.map(
+              (task) => (
+
+                <div
+                  key={task.task_id}
+                  className="border border-slate-200 rounded-xl px-4 py-3"
+                >
+
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+
+                    <div>
+
+                      <p className="font-semibold text-slate-900">
+
+                        {task.title}
+
+                      </p>
+
+                      <p className="text-sm text-slate-500 mt-1">
+
+                        Assigned to {task.assigned_to_name || "Unassigned"}
+
+                      </p>
+
+                    </div>
+
+                    <span className="text-sm font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1">
+
+                      Risk {task.risk_score}
+
+                    </span>
+
+                  </div>
+
+                  <p className="text-sm text-slate-600 mt-2">
+
+                    {task.reasons?.join(", ")}
+
+                  </p>
+
+                </div>
+              )
+            )}
+
+          </div>
+
+        </div>
+      )}
+
     </div>
   )
 }

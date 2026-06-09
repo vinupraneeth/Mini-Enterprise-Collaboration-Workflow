@@ -1,6 +1,6 @@
 # Backend - Mini Enterprise Collaboration Workflow
 
-This folder contains the FastAPI backend for the Mini Enterprise Collaboration Workflow project. The backend handles authentication, role-based access, tasks, comments, approvals, documents, notifications, audit logs, and dashboard data.
+This folder contains the FastAPI backend for the Mini Enterprise Collaboration Workflow project. The backend handles authentication, role-based access, tasks, comments, approvals, documents, notifications, audit logs, dashboard data, real-time updates, intelligent insights, SaaS subscriptions, credits, and Razorpay billing.
 
 The code follows a simple layered structure:
 
@@ -18,6 +18,9 @@ Routers handle API requests, services contain business logic, repositories handl
 - Alembic
 - MySQL
 - fastapi-pagination
+- Redis
+- Razorpay SDK
+- WebSockets
 - python-jose for JWT authentication
 - Passlib and bcrypt for password hashing
 
@@ -26,7 +29,11 @@ Routers handle API requests, services contain business logic, repositories handl
 Authentication:
 - Register users with a selected role
 - Login and receive a JWT access token
+- Refresh access tokens using refresh tokens
+- Request and confirm token-based password reset
+- Use Google OAuth when OAuth credentials are configured
 - Fetch the currently logged-in user
+- Rate limiting is applied to sensitive authentication endpoints
 
 Users:
 - Admin can view users
@@ -81,6 +88,20 @@ Dashboard:
 - Task distribution by status
 - Basic analytics
 - AI-style workflow summary
+- Role-specific dashboard view
+- Smart assignment recommendation
+- Delay-risk task detection
+
+Real-time Updates:
+- WebSocket endpoint sends live notification events
+- Kanban updates refresh related users when task state changes
+
+SaaS:
+- Organization model for multi-tenant isolation
+- Paid Basic, Silver, and Gold subscription plans
+- Credit ledger for usage credits
+- Billing transaction records
+- Razorpay order creation and signature verification
 
 ## Setup
 
@@ -104,7 +125,25 @@ DATABASE_URL=mysql+pymysql://username:password@localhost:3306/workflow_db
 SECRET_KEY=replace_with_a_secure_secret_key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+PASSWORD_RESET_TOKEN_EXPIRE_MINUTES=30
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+FRONTEND_URL=http://localhost:5173
+REDIS_URL=redis://localhost:6379/0
+CACHE_DEFAULT_TTL_SECONDS=300
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
 ```
+
+For Razorpay local testing, use Razorpay test mode keys:
+
+```text
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
+```
+
+After changing `.env`, restart the backend server.
 
 Run migrations:
 
@@ -131,6 +170,12 @@ Authentication:
 ```text
 POST /auth/register
 POST /auth/login
+POST /auth/refresh
+POST /auth/password-reset/request
+POST /auth/password-reset/confirm
+GET  /auth/google/status
+GET  /auth/google
+GET  /auth/google/callback
 GET  /auth/me
 ```
 
@@ -171,6 +216,8 @@ GET /dashboard/summary
 GET /dashboard/task-distribution
 GET /dashboard/analytics
 GET /dashboard/ai-summary
+GET /dashboard/role-view
+GET /dashboard/smart-assignment
 ```
 
 Documents:
@@ -194,6 +241,22 @@ Audit Logs and Activity:
 GET /audit-logs/
 GET /activity/
 ```
+
+SaaS and Payments:
+
+```text
+GET   /saas/organizations
+POST  /saas/organizations
+GET   /saas/organization
+GET   /saas/plans
+GET   /saas/subscription
+GET   /saas/credits
+GET   /saas/billing/transactions
+POST  /payments/create-payment
+POST  /payments/verify-razorpay
+```
+
+All paid subscription plans are activated through Razorpay payment verification. The backend creates a Razorpay order, the frontend opens Razorpay Checkout, and the backend verifies the returned Razorpay signature before updating the subscription and credits.
 
 ## Example Payloads
 

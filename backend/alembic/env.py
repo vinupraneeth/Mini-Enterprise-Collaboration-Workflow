@@ -23,6 +23,16 @@ from app.models.audit_log_model import AuditLog
 
 from app.models.notification_model import Notification
 
+from app.models.saas_model import Organization
+
+from app.models.saas_model import SubscriptionPlan
+
+from app.models.saas_model import Subscription
+
+from app.models.saas_model import CreditLedger
+
+from app.models.saas_model import BillingTransaction
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

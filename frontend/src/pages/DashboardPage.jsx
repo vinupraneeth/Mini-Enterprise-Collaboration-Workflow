@@ -16,7 +16,11 @@ import KanbanBoard from "../components/KanbanBoard"
 
 import DashboardAnalytics from "../components/DashboardAnalytics"
 
+import RoleDashboardPanel from "../components/RoleDashboardPanel"
+
 import AiSummaryPanel from "../components/AiSummaryPanel"
+
+import SmartAssignmentPanel from "../components/SmartAssignmentPanel"
 
 import NotificationsPanel from "../components/NotificationsPanel"
 
@@ -40,6 +44,10 @@ export default function DashboardPage() {
 
   const [editingTask, setEditingTask] =
     useState(null)
+
+  const [notificationRefreshKey,
+    setNotificationRefreshKey] =
+    useState(0)
 
   const token =
     localStorage.getItem("token")
@@ -126,6 +134,56 @@ export default function DashboardPage() {
     fetchTasks()
 
   }, [])
+
+
+  useEffect(() => {
+
+    if (!user?.id) {
+
+      return
+    }
+
+    const socket =
+      new WebSocket(
+        `ws://127.0.0.1:8000/ws/${user.id}`
+      )
+
+    socket.onmessage = (event) => {
+
+      try {
+
+        const payload =
+          JSON.parse(event.data)
+
+        if (payload.type === "notification") {
+
+          setNotificationRefreshKey(
+            (value) => value + 1
+          )
+        }
+
+        if (payload.type === "kanban_updated") {
+
+          fetchTasks()
+        }
+
+      } catch (error) {
+
+        console.error(error)
+      }
+    }
+
+    socket.onerror = (error) => {
+
+      console.error(error)
+    }
+
+    return () => {
+
+      socket.close()
+    }
+
+  }, [user?.id])
 
 
   const handleLogout = () => {
@@ -322,9 +380,20 @@ export default function DashboardPage() {
           stats={stats}
         />
 
+        <div className="mt-6">
+
+          <RoleDashboardPanel
+            user={user}
+          />
+
+        </div>
+
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 mt-6 items-start">
 
-          <div className="space-y-6 min-w-0">
+          <div
+            id="analytics"
+            className="space-y-6 min-w-0 scroll-mt-6"
+          >
 
             <DashboardAnalytics
               stats={stats}
@@ -333,15 +402,26 @@ export default function DashboardPage() {
 
             <AiSummaryPanel />
 
+            <SmartAssignmentPanel
+              user={user}
+            />
+
           </div>
 
           <NotificationsPanel
+            id="notifications"
             user={user}
+            refreshKey={
+              notificationRefreshKey
+            }
           />
 
         </div>
 
-        <div className="mt-8">
+        <div
+          id="kanban"
+          className="mt-8 scroll-mt-6"
+        >
 
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
 
@@ -390,7 +470,14 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <ActivityFeedPanel />
+        <div
+          id="activity"
+          className="scroll-mt-6"
+        >
+
+          <ActivityFeedPanel />
+
+        </div>
       </div>
 
       {isModalOpen && !editingTask && (

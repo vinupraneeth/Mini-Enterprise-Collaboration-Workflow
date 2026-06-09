@@ -23,6 +23,10 @@ from app.services.notification_service import (
     create_notification
 )
 
+from app.core.cache import (
+    invalidate_dashboard_cache
+)
+
 
 def check_task_access(
     task,
@@ -161,6 +165,8 @@ def add_comment_to_task(
             )
 
     db.commit()
+
+    invalidate_dashboard_cache()
 
     comments = get_comments_by_task(
         db,

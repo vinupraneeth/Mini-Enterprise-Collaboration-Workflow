@@ -22,6 +22,10 @@ from app.models.approval_history_model import (
     ApprovalHistory
 )
 
+from app.models.audit_log_model import (
+    AuditLog
+)
+
 
 def get_visible_task_ids(
     db,
@@ -201,6 +205,48 @@ def fetch_activity_feed(
 
             "created_at":
             item.created_at
+        })
+
+    audit_statement = (
+        select(AuditLog)
+    )
+
+    audit_actions = [
+        "created task",
+        "updated task",
+        "assigned task",
+        "deleted task",
+        "uploaded document",
+        "downloaded document"
+    ]
+
+    audit_statement = audit_statement.where(
+        AuditLog.action.in_(
+            audit_actions
+        )
+    )
+
+    if current_user.role != "admin":
+
+        audit_statement = audit_statement.where(
+            AuditLog.user_id == current_user.id
+        )
+
+    audit_logs = db.execute(
+        audit_statement
+    ).scalars().all()
+
+    for item in audit_logs:
+
+        activities.append({
+
+            "type": "audit",
+
+            "message":
+            f"{item.action.title()} on {item.entity} #{item.entity_id}",
+
+            "created_at":
+            item.timestamp
         })
 
     activities.sort(

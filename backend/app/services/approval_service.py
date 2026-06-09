@@ -24,6 +24,10 @@ from app.services.notification_service import (
     create_notification
 )
 
+from app.core.cache import (
+    invalidate_dashboard_cache
+)
+
 
 def manager_can_access_approval(
     db: Session,
@@ -279,6 +283,9 @@ def create_approval_request(
                 )
 
     db.commit()
+
+    invalidate_dashboard_cache()
+
     db.refresh(approval)
 
     return approval
@@ -565,6 +572,9 @@ def review_approval_request(
                 )
 
     db.commit()
+
+    invalidate_dashboard_cache()
+
     db.refresh(approval)
 
     return approval

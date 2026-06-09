@@ -46,7 +46,12 @@ from app.services.audit_log_service import (
 )
 
 from app.services.notification_service import (
-    create_notification
+    create_notification,
+    dispatch_kanban_update
+)
+
+from app.core.cache import (
+    invalidate_dashboard_cache
 )
 
 
@@ -66,6 +71,36 @@ VALID_TRANSITIONS = {
 
     "done": []
 }
+
+
+def get_task_related_user_ids(
+    task,
+    *extra_user_ids
+):
+
+    user_ids = set()
+
+    if task.created_by:
+
+        user_ids.add(
+            task.created_by
+        )
+
+    if task.assigned_to:
+
+        user_ids.add(
+            task.assigned_to
+        )
+
+    for user_id in extra_user_ids:
+
+        if user_id:
+
+            user_ids.add(
+                user_id
+            )
+
+    return list(user_ids)
 
 
 def attach_task_user_names(
@@ -148,7 +183,59 @@ def validate_assignment(
             detail="Tasks can be assigned only to employees"
         )
 
+    if (
+        current_user.organization_id
+        and
+        assigned_user.organization_id != current_user.organization_id
+    ):
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail="Tasks can be assigned only within your organization"
+        )
+
     return assigned_user
+
+
+def get_organization_user_ids(
+    db: Session,
+    current_user
+):
+
+    if not current_user.organization_id:
+
+        return []
+
+    return db.execute(
+        select(User.id).where(
+            User.organization_id ==
+            current_user.organization_id
+        )
+    ).scalars().all()
+
+
+def task_in_current_organization(
+    db: Session,
+    task,
+    current_user
+):
+
+    if not current_user.organization_id:
+
+        return True
+
+    organization_user_ids = get_organization_user_ids(
+        db,
+        current_user
+    )
+
+    return (
+        task.created_by in organization_user_ids
+        or
+        task.assigned_to in organization_user_ids
+    )
 
 
 def create_new_task(
@@ -228,6 +315,15 @@ def create_new_task(
 
     db.commit()
 
+    invalidate_dashboard_cache()
+
+    dispatch_kanban_update(
+        get_task_related_user_ids(
+            task,
+            current_user.id
+        )
+    )
+
     return task
 
 
@@ -242,7 +338,18 @@ def fetch_tasks(
 
     if current_user.role == "admin":
 
-        filtered_tasks = tasks
+        filtered_tasks = [
+
+            task
+
+            for task in tasks
+
+            if task_in_current_organization(
+                db,
+                task,
+                current_user
+            )
+        ]
 
     elif current_user.role == "manager":
 
@@ -333,6 +440,17 @@ def fetch_task_by_id(
             detail="Task not found"
         )
 
+    if not task_in_current_organization(
+        db,
+        task,
+        current_user
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
+
     if current_user.role == "employee" and task.assigned_to != current_user.id:
         raise HTTPException(
             status_code=403,
@@ -370,6 +488,12 @@ def assign_task(
         task_id
     )
 
+    old_assigned_to = (
+        task.assigned_to
+        if task
+        else None
+    )
+
     if not task:
 
         raise HTTPException(
@@ -377,6 +501,17 @@ def assign_task(
             status_code=404,
 
             detail="Task not found"
+        )
+
+    if not task_in_current_organization(
+        db,
+        task,
+        current_user
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
         )
 
     if current_user.role not in [
@@ -431,6 +566,16 @@ def assign_task(
 
     db.commit()
 
+    invalidate_dashboard_cache()
+
+    dispatch_kanban_update(
+        get_task_related_user_ids(
+            task,
+            current_user.id,
+            old_assigned_to
+        )
+    )
+
     db.refresh(task)
 
     return task
@@ -452,6 +597,12 @@ def edit_task(
         task_id
     )
 
+    old_assigned_to = (
+        task.assigned_to
+        if task
+        else None
+    )
+
     if not task:
 
         raise HTTPException(
@@ -459,6 +610,17 @@ def edit_task(
             status_code=404,
 
             detail="Task not found"
+        )
+
+    if not task_in_current_organization(
+        db,
+        task,
+        current_user
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
         )
 
     if current_user.role not in [
@@ -514,6 +676,16 @@ def edit_task(
 
     db.commit()
 
+    invalidate_dashboard_cache()
+
+    dispatch_kanban_update(
+        get_task_related_user_ids(
+            task,
+            current_user.id,
+            old_assigned_to
+        )
+    )
+
     return task
 
 
@@ -538,6 +710,17 @@ def remove_task(
             status_code=404,
 
             detail="Task not found"
+        )
+
+    if not task_in_current_organization(
+        db,
+        task,
+        current_user
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
         )
 
     if current_user.role not in [
@@ -572,10 +755,23 @@ def remove_task(
         task.id
     )
 
-    return delete_task(
+    related_user_ids = get_task_related_user_ids(
+        task,
+        current_user.id
+    )
+
+    deleted_task = delete_task(
         db,
         task
     )
+
+    invalidate_dashboard_cache()
+
+    dispatch_kanban_update(
+        related_user_ids
+    )
+
+    return deleted_task
 
 
 def change_task_status(
@@ -601,6 +797,17 @@ def change_task_status(
             status_code=404,
 
             detail="Task not found"
+        )
+
+    if not task_in_current_organization(
+        db,
+        task,
+        current_user
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
         )
 
     if current_user.role == "employee" and task.assigned_to != current_user.id:
@@ -847,6 +1054,15 @@ def change_task_status(
 
     db.commit()
 
+    invalidate_dashboard_cache()
+
+    dispatch_kanban_update(
+        get_task_related_user_ids(
+            task,
+            current_user.id
+        )
+    )
+
     db.refresh(task)
 
     return task
@@ -869,6 +1085,17 @@ def get_task_status_history_statement(db: Session, task_id: int, current_user):
 
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+
+    if not task_in_current_organization(
+        db,
+        task,
+        current_user
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
 
     if current_user.role == "employee" and task.assigned_to != current_user.id:
         raise HTTPException(status_code=403, detail="Employees can view only assigned task history")

@@ -4,6 +4,54 @@ from sqlalchemy import select
 
 from app.models.notification_model import Notification
 
+from app.services.websocket_manager import (
+    manager
+)
+
+from app.services.audit_log_service import (
+    create_audit_log
+)
+
+import asyncio
+
+
+def dispatch_websocket_message(
+    user_id,
+    payload
+):
+
+    if not manager.loop:
+
+        return
+
+    asyncio.run_coroutine_threadsafe(
+        manager.send_message(
+            user_id,
+            payload
+        ),
+        manager.loop
+    )
+
+
+def dispatch_kanban_update(
+    user_ids
+):
+
+    if not manager.loop:
+
+        return
+
+    asyncio.run_coroutine_threadsafe(
+        manager.broadcast_to_users(
+            user_ids,
+            {
+                "type": "kanban_updated",
+                "message": "Kanban board updated"
+            }
+        ),
+        manager.loop
+    )
+
 
 def create_notification(
     db,
@@ -21,6 +69,19 @@ def create_notification(
     )
 
     db.add(notification)
+
+    dispatch_websocket_message(
+        user_id,
+        {
+            "type": "notification",
+            "message": message,
+            "notification": {
+                "user_id": user_id,
+                "message": message,
+                "is_read": False
+            }
+        }
+    )
 
     return notification
 
@@ -77,6 +138,14 @@ def mark_notification_read(
         )
 
     notification.is_read = True
+
+    create_audit_log(
+        db,
+        current_user.id,
+        "read notification",
+        "notification",
+        notification.id
+    )
 
     db.commit()
 

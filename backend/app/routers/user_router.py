@@ -45,7 +45,10 @@ def get_users(
 
     return paginate(
         db,
-        select(User)
+        select(User).where(
+            User.organization_id ==
+            current_user.organization_id
+        )
     )
 
 
@@ -73,7 +76,9 @@ def get_employees(
     return paginate(
         db,
         select(User).where(
-            User.role == "employee"
+            User.role == "employee",
+            User.organization_id ==
+            current_user.organization_id
         )
     )
 
@@ -114,6 +119,17 @@ def get_user_by_id(
         raise HTTPException(
             status_code=403,
             detail="Users can view only their own profile"
+        )
+
+    if (
+        current_user.role.lower() == "admin"
+        and
+        user.organization_id != current_user.organization_id
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Users can view only their own organization"
         )
 
     return user

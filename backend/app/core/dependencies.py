@@ -39,27 +39,49 @@ def require_admin(
     current_user = Depends(get_current_user)
 ):
 
-    if current_user.role.lower() != "admin":
+    return require_roles(
+        [
+            "admin"
+        ]
+    )(
+        current_user
+    )
 
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
 
-    return current_user
+def require_roles(
+    allowed_roles: list[str]
+):
+
+    normalized_roles = [
+        role.lower()
+        for role in allowed_roles
+    ]
+
+    def role_checker(
+        current_user = Depends(get_current_user)
+    ):
+
+        if current_user.role.lower() not in normalized_roles:
+
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions"
+            )
+
+        return current_user
+
+    return role_checker
 
 
 def require_manager_or_admin(
     current_user = Depends(get_current_user)
 ):
 
-    allowed_roles = ["admin", "manager"]
-
-    if current_user.role.lower() not in allowed_roles:
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager or Admin access required"
-        )
-
-    return current_user
+    return require_roles(
+        [
+            "admin",
+            "manager"
+        ]
+    )(
+        current_user
+    )

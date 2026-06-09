@@ -10,6 +10,10 @@ from app.middleware.request_logging_middleware import (
     RequestLoggingMiddleware
 )
 
+from app.middleware.rate_limit_middleware import (
+    RateLimitMiddleware
+)
+
 from app.models import *
 
 from app.db.database import (
@@ -57,8 +61,26 @@ from app.routers.document_router import (
     router as document_router
 )
 
+from app.routers.websocket_router import (
+    router as websocket_router
+)
+
+from app.routers.saas_router import (
+    router as saas_router
+)
+
+from app.routers.payment_router import (
+    router as payment_router
+)
+
 #CORS MIDDLEWARE COnFIG for CROSS ORIGIN request handling
 app = FastAPI()
+
+
+app.add_middleware(
+
+    RateLimitMiddleware
+)
 
 
 app.add_middleware(
@@ -103,5 +125,11 @@ app.include_router(audit_log_router)
 app.include_router(notification_router)
 
 app.include_router(document_router)
+
+app.include_router(websocket_router)
+
+app.include_router(saas_router)
+
+app.include_router(payment_router)
 
 add_pagination(app)

@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import (
     Boolean,
     DateTime,
+    ForeignKey,
     String
 )
 
@@ -47,6 +48,12 @@ class User(Base):
         nullable=False
     )
 
+    organization_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizations.id"),
+        nullable=True,
+        index=True
+    )
+
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True
@@ -79,4 +86,9 @@ class User(Base):
         "Task",
         foreign_keys="Task.updated_by",
         overlaps="updater"
+    )
+
+    organization = relationship(
+        "Organization",
+        back_populates="users"
     )
