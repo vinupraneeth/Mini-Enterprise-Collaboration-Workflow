@@ -24,6 +24,16 @@ import AuditLogsPage from "./pages/AuditLogsPage"
 
 import SubscriptionPlansPage from "./pages/SubscriptionPlansPage"
 
+import SlaRulesPage from "./pages/SlaRulesPage"
+
+import SlaDashboardPage from "./pages/SlaDashboardPage"
+
+import ApprovalEscalationsPage from "./pages/ApprovalEscalationsPage"
+
+import ApprovalDelegationsPage from "./pages/ApprovalDelegationsPage"
+
+import NotificationPreferencesPage from "./pages/NotificationPreferencesPage"
+
 
 function App() {
 
@@ -103,6 +113,71 @@ function App() {
             <ProtectedRoute>
 
               <SubscriptionPlansPage />
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+
+          path="/sla-rules"
+
+          element={
+            <ProtectedRoute>
+
+              <SlaRulesPage />
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+
+          path="/dashboard/sla"
+
+          element={
+            <ProtectedRoute>
+
+              <SlaDashboardPage />
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+
+          path="/approval-escalations"
+
+          element={
+            <ProtectedRoute>
+
+              <ApprovalEscalationsPage />
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+
+          path="/approval-delegations"
+
+          element={
+            <ProtectedRoute>
+
+              <ApprovalDelegationsPage />
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+
+          path="/settings/notification-preferences"
+
+          element={
+            <ProtectedRoute>
+
+              <NotificationPreferencesPage />
 
             </ProtectedRoute>
           }

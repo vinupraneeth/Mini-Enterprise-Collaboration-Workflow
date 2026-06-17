@@ -11,6 +11,10 @@ class NotificationResponse(BaseModel):
 
     message: str
 
+    notification_type: str | None = None
+
+    priority: str | None = None
+
     is_read: bool
 
     created_at: datetime | None = None

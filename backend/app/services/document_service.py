@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
@@ -216,7 +220,7 @@ def upload_document(
             message
         )
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(document)
 

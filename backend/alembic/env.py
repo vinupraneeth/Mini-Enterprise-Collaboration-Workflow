@@ -33,6 +33,16 @@ from app.models.saas_model import CreditLedger
 
 from app.models.saas_model import BillingTransaction
 
+from app.models.workflow_governance_model import SLARule
+
+from app.models.workflow_governance_model import SLATracking
+
+from app.models.workflow_governance_model import ApprovalEscalation
+
+from app.models.workflow_governance_model import ApprovalDelegation
+
+from app.models.workflow_governance_model import NotificationPreference
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

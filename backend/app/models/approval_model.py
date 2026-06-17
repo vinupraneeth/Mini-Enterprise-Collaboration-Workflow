@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     String,
@@ -61,6 +62,26 @@ class Approval(Base):
     current_level: Mapped[str | None] = mapped_column(
         String(50),
         default="manager"
+    )
+
+    sla_status: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True
+    )
+
+    sla_due_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    is_escalated: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False
+    )
+
+    current_escalation_to: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True
     )
 
     remarks: Mapped[str | None] = mapped_column(

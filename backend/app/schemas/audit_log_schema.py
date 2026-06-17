@@ -15,6 +15,20 @@ class AuditLogResponse(BaseModel):
 
     entity_id: int | None = None
 
+    module_name: str | None = None
+
+    action_type: str | None = None
+
+    record_id: int | None = None
+
+    old_data: str | None = None
+
+    new_data: str | None = None
+
+    ip_address: str | None = None
+
+    user_agent: str | None = None
+
     timestamp: datetime | None = None
 
     class Config:

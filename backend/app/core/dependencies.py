@@ -85,3 +85,32 @@ def require_manager_or_admin(
     )(
         current_user
     )
+
+
+def require_admin_or_auditor(
+    current_user = Depends(get_current_user)
+):
+
+    return require_roles(
+        [
+            "admin",
+            "auditor"
+        ]
+    )(
+        current_user
+    )
+
+
+def require_governance_viewer(
+    current_user = Depends(get_current_user)
+):
+
+    return require_roles(
+        [
+            "admin",
+            "manager",
+            "auditor"
+        ]
+    )(
+        current_user
+    )

@@ -7,6 +7,8 @@ import axios from "axios"
 
 import Navbar from "../components/Navbar"
 
+import SLABadge from "../components/SLABadge"
+
 
 export default function ApprovalsPage() {
 
@@ -186,6 +188,61 @@ export default function ApprovalsPage() {
     }
 
 
+  const canEscalateApproval =
+    (approval) => (
+      user?.role === "manager" &&
+      approval.current_level === "manager" &&
+      [
+        "pending",
+        "hold"
+      ].includes(approval.status) &&
+      !approval.is_escalated &&
+      approval.requested_by !== user?.id
+    )
+
+
+  const formatDateTime =
+    (value) => {
+
+      if (!value) {
+
+        return "Not set"
+      }
+
+      return new Date(value).toLocaleString(
+        "en-IN",
+        {
+          dateStyle: "medium",
+          timeStyle: "short"
+        }
+      )
+    }
+
+  const formatLabel =
+    (value) =>
+      String(value || "-")
+        .replace(/_/g, " ")
+
+
+  const renderBadge =
+    (
+      label,
+      value,
+      className = "bg-slate-100 text-slate-700"
+    ) => (
+
+      <span
+        className={`${className} px-3 py-1 rounded-full text-sm font-semibold capitalize`}
+      >
+
+        {label}:
+        {" "}
+        {formatLabel(value)}
+
+      </span>
+    )
+
+
   const handleAction =
     async (
       approvalId,
@@ -308,35 +365,76 @@ export default function ApprovalsPage() {
 
             <div className="mt-4 flex flex-wrap gap-3">
 
-              <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm">
+              {renderBadge(
+                "Status",
+                approval.status,
+                "bg-amber-100 text-amber-800"
+              )}
 
-                {approval.status}
+              {renderBadge(
+                "Level",
+                approval.current_level,
+                "bg-indigo-100 text-indigo-800"
+              )}
 
-              </span>
-
-              <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">
-
-                Level:
-                {" "}
-                {approval.current_level}
-
-              </span>
-
-              <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">
-
-                {approval.task_id
+              {renderBadge(
+                "Type",
+                approval.task_id
                   ? `Task #${approval.task_id}`
-                  : "General request"}
+                  : "General request"
+              )}
 
-              </span>
+              {renderBadge(
+                "Requester",
+                `#${approval.requested_by}`
+              )}
 
-              <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">
+              <SLABadge
+                status={approval.sla_status}
+                label="SLA"
+              />
 
-                Requested by:
-                {" "}
-                #{approval.requested_by}
+              {renderBadge(
+                "Escalation",
+                approval.is_escalated
+                  ? "Escalated"
+                  : "Not escalated",
+                approval.is_escalated
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-slate-100 text-slate-700"
+              )}
 
-              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+
+                <p className="text-xs font-semibold text-slate-500 mb-1">
+                  SLA Due Time
+                </p>
+
+                <p className="text-sm text-slate-700">
+                  {formatDateTime(
+                    approval.sla_due_time
+                  )}
+                </p>
+
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+
+                <p className="text-xs font-semibold text-slate-500 mb-1">
+                  Current Escalation To
+                </p>
+
+                <p className="text-sm text-slate-700">
+                  {approval.current_escalation_to
+                    ? `User #${approval.current_escalation_to}`
+                    : "-"}
+                </p>
+
+              </div>
 
             </div>
 
@@ -410,6 +508,18 @@ export default function ApprovalsPage() {
             </div>
           )}
 
+          {canEscalateApproval(approval) && (
+
+            <a
+              href="/approval-escalations"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-xl font-semibold text-center"
+            >
+
+              Escalate
+
+            </a>
+          )}
+
         </div>
 
       </div>
@@ -448,7 +558,8 @@ export default function ApprovalsPage() {
 
         </div>
 
-        {user?.role !== "admin" && (
+        {(user?.role === "employee" ||
+          user?.role === "manager") && (
 
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 mb-8">
 
@@ -530,7 +641,8 @@ export default function ApprovalsPage() {
           </div>
         )}
 
-        {user?.role !== "admin" && (
+        {(user?.role === "employee" ||
+          user?.role === "manager") && (
 
           <div className="mb-10">
 

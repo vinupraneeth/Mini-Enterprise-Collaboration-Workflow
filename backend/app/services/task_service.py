@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
@@ -54,6 +58,12 @@ from app.core.cache import (
     invalidate_dashboard_cache
 )
 
+from app.services.sla_service import (
+    apply_sla_to_approval_if_available,
+    apply_sla_to_task_if_available,
+    complete_sla_for_record
+)
+
 
 VALID_TRANSITIONS = {
 
@@ -71,6 +81,22 @@ VALID_TRANSITIONS = {
 
     "done": []
 }
+
+
+def ensure_task_role_allowed(
+    current_user
+):
+
+    if current_user.role not in [
+        "admin",
+        "manager",
+        "employee"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
 
 
 def get_task_related_user_ids(
@@ -299,6 +325,11 @@ def create_new_task(
         current_user.id
     )
 
+    apply_sla_to_task_if_available(
+        db,
+        task
+    )
+
     create_audit_log(
         db,
         current_user.id,
@@ -313,7 +344,7 @@ def create_new_task(
         f"You have been assigned task #{task.id}: {task.title}"
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     invalidate_dashboard_cache()
 
@@ -432,6 +463,10 @@ def fetch_task_by_id(
     task_id: int,
     current_user
 ):
+    ensure_task_role_allowed(
+        current_user
+    )
+
     task = get_task_by_id(db, task_id)
 
     if not task:
@@ -482,6 +517,10 @@ def assign_task(
 
     current_user
 ):
+
+    ensure_task_role_allowed(
+        current_user
+    )
 
     task = get_task_by_id(
         db,
@@ -564,7 +603,7 @@ def assign_task(
         f"You have been assigned task #{task.id}: {task.title}"
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     invalidate_dashboard_cache()
 
@@ -674,7 +713,7 @@ def edit_task(
         f"Task #{task.id} was updated: {task.title}"
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     invalidate_dashboard_cache()
 
@@ -784,6 +823,10 @@ def change_task_status(
 
     current_user
 ):
+
+    ensure_task_role_allowed(
+        current_user
+    )
 
     task = get_task_by_id(
         db,
@@ -946,6 +989,14 @@ def change_task_status(
         status_data.status
     )
 
+    if status_data.status == "done":
+
+        complete_sla_for_record(
+            db,
+            "task",
+            task.id
+        )
+
     # CREATE APPROVAL
     # WHEN TASK MOVES
     # TO REVIEW
@@ -984,6 +1035,11 @@ def change_task_status(
         db.add(approval)
 
         db.flush()
+
+        apply_sla_to_approval_if_available(
+            db,
+            approval
+        )
 
         approval_history = ApprovalHistory(
 
@@ -1052,7 +1108,7 @@ def change_task_status(
             f"Task #{task.id} status changed to {status_data.status}."
         )
 
-    db.commit()
+    handle_db_commit(db)
 
     invalidate_dashboard_cache()
 
@@ -1080,6 +1136,10 @@ def fetch_task_status_history(db: Session, task_id: int, current_user):
 
 
 def get_task_status_history_statement(db: Session, task_id: int, current_user):
+
+    ensure_task_role_allowed(
+        current_user
+    )
 
     task = get_task_by_id(db, task_id)
 

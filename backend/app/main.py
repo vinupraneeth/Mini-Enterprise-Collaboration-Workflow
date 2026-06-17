@@ -73,6 +73,26 @@ from app.routers.payment_router import (
     router as payment_router
 )
 
+from app.routers.sla_rule_router import (
+    router as sla_rule_router
+)
+
+from app.routers.sla_tracking_router import (
+    router as sla_tracking_router
+)
+
+from app.routers.approval_escalation_router import (
+    router as approval_escalation_router
+)
+
+from app.routers.approval_delegation_router import (
+    router as approval_delegation_router
+)
+
+from app.routers.notification_preference_router import (
+    router as notification_preference_router
+)
+
 #CORS MIDDLEWARE COnFIG for CROSS ORIGIN request handling
 app = FastAPI()
 
@@ -131,5 +151,15 @@ app.include_router(websocket_router)
 app.include_router(saas_router)
 
 app.include_router(payment_router)
+
+app.include_router(sla_rule_router)
+
+app.include_router(sla_tracking_router)
+
+app.include_router(approval_escalation_router)
+
+app.include_router(approval_delegation_router)
+
+app.include_router(notification_preference_router)
 
 add_pagination(app)

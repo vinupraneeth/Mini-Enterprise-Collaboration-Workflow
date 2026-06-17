@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from sqlalchemy import select
 
 from sqlalchemy.orm import Session
@@ -18,7 +22,7 @@ def create_comment(
 
     db.add(comment)
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(comment)
 

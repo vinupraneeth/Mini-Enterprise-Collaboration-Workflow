@@ -1,6 +1,8 @@
 export default function StatusBadge({
 
-  status
+  status,
+
+  label
 
 }) {
 
@@ -19,17 +21,22 @@ export default function StatusBadge({
       "bg-green-100 text-green-700"
   }
 
+  const displayValue =
+    status?.replace(
+      "_",
+      " "
+    )
+
 
   return (
 
     <span
-      className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[status]}`}
+      className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${styles[status] || "bg-slate-100 text-slate-600"}`}
     >
 
-      {status.replace(
-        "_",
-        " "
-      )}
+      {label
+        ? `${label}: ${displayValue}`
+        : displayValue}
 
     </span>
   )

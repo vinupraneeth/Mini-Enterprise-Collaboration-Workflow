@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from sqlalchemy import select
 
 from sqlalchemy.orm import Session
@@ -39,7 +43,7 @@ def create_task(
 
     db.add(task)
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(task)
 
@@ -108,7 +112,7 @@ def update_task(
         updated_by
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(task)
 
@@ -124,4 +128,4 @@ def delete_task(
 
     db.delete(task)
 
-    db.commit()
+    handle_db_commit(db)

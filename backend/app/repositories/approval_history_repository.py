@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from app.models.approval_history_model import (
     ApprovalHistory
 )
@@ -29,7 +33,7 @@ def create_approval_history(
 
     db.add(history)
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(history)
 

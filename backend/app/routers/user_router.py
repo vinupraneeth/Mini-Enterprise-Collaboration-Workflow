@@ -22,7 +22,8 @@ from app.schemas.user_schema import (
 
 from app.core.dependencies import (
     get_current_user,
-    require_admin
+    require_admin,
+    require_manager_or_admin
 )
 
 
@@ -77,6 +78,32 @@ def get_employees(
         db,
         select(User).where(
             User.role == "employee",
+            User.organization_id ==
+            current_user.organization_id
+        )
+    )
+
+
+@router.get(
+    "/approvers",
+    response_model=Page[UserResponse]
+)
+def get_approvers(
+    db: Session = Depends(get_db),
+    current_user = Depends(
+        require_manager_or_admin
+    )
+):
+
+    return paginate(
+        db,
+        select(User).where(
+            User.role.in_(
+                [
+                    "admin",
+                    "manager"
+                ]
+            ),
             User.organization_id ==
             current_user.organization_id
         )

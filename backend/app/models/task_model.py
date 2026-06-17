@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     String,
@@ -50,6 +51,21 @@ class Task(Base):
     due_date: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True
+    )
+
+    sla_status: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True
+    )
+
+    sla_due_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    is_sla_breached: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False
     )
 
     assigned_to: Mapped[int | None] = mapped_column(

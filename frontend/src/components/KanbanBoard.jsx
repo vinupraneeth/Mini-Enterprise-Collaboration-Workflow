@@ -20,6 +20,8 @@ import StatusBadge from "./StatusBadge"
 
 import PriorityBadge from "./PriorityBadge"
 
+import SLABadge from "./SLABadge"
+
 
 function KanbanBoard({
 
@@ -516,6 +518,17 @@ function KanbanBoard({
 
                                         <StatusBadge
                                           status={task.status}
+                                          label="Status"
+                                        />
+
+                                      </div>
+
+                                      <div className="mt-2">
+
+                                        <SLABadge
+                                          status={task.sla_status}
+                                          breached={task.is_sla_breached}
+                                          label="SLA"
                                         />
 
                                       </div>
@@ -524,6 +537,7 @@ function KanbanBoard({
 
                                     <PriorityBadge
                                       priority={task.priority}
+                                      label="Priority"
                                     />
 
                                   </div>
@@ -590,7 +604,30 @@ function KanbanBoard({
 
                                       </p>
 
+                                      <p>
+
+                                        SLA Due:
+                                        {" "}
+                                        <span className="font-semibold text-slate-700">
+
+                                          {formatDateTime(
+                                            task.sla_due_time
+                                          )}
+
+                                        </span>
+
+                                      </p>
+
                                     </div>
+
+                                    {task.is_sla_breached && (
+
+                                      <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 font-semibold">
+
+                                        SLA breached for this task
+
+                                      </div>
+                                    )}
 
                                     {task.approval_status && (
 

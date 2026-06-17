@@ -2,7 +2,7 @@
 
 Mini Enterprise Collaboration Workflow is a full-stack application for managing internal tasks, approvals, comments, documents, and workflow updates. It is built with FastAPI, React, MySQL, and Tailwind CSS.
 
-The project was developed in phases. The first phase focused on authentication, roles, and task management. Later phases added Kanban workflow tracking, comments, approvals, dashboard analytics, document versioning, notifications, audit logs, activity tracking, advanced authentication, WebSockets, intelligent task insights, multi-tenant SaaS support, subscription plans, credits, and Razorpay billing integration.
+The project was developed in phases. The first phase focused on authentication, roles, and task management. Later phases added Kanban workflow tracking, comments, approvals, dashboard analytics, document versioning, notifications, audit logs, activity tracking, advanced authentication, WebSockets, intelligent task insights, multi-tenant SaaS support, subscription plans, credits, Razorpay billing integration, and workflow governance features such as SLA tracking, approval escalations, delegations, notification preferences, and Auditor access.
 
 ## Features
 
@@ -10,7 +10,7 @@ The project was developed in phases. The first phase focused on authentication, 
 - JWT refresh token flow for renewing access tokens
 - Token-based password reset with secure token storage
 - Google OAuth login support when OAuth credentials are configured
-- Role-based access for Admin, Manager, and Employee users
+- Role-based access for Admin, Manager, Employee, and Auditor users
 - Task creation, assignment, editing, deletion, and role-based visibility
 - Kanban workflow using `todo`, `in_progress`, `review`, and `done`
 - Backend validation for allowed task status transitions
@@ -39,6 +39,15 @@ The project was developed in phases. The first phase focused on authentication, 
 - Basic, Silver, and Gold subscription plans
 - Credit ledger and billing transaction tracking
 - Razorpay checkout integration with backend signature verification
+- SLA rules for task and approval workflows
+- SLA tracking for active, breached, and completed workflow records
+- SLA status fields on tasks and approvals
+- Approval escalation tracking and Manager-to-Admin escalation flow
+- Approval delegation between eligible approval users
+- User notification preferences
+- Enhanced audit log filtering and detail view
+- Auditor role with read-only access to audit and governance views
+- Shared database commit exception handling with rollback on database errors
 
 ## Tech Stack
 
@@ -142,6 +151,11 @@ http://localhost:5173
 - Activity: `/activity/`
 - SaaS: `/saas/organizations`, `/saas/plans`, `/saas/subscription`, `/saas/credits`
 - Payments: `/payments/create-payment`, `/payments/verify-razorpay`
+- SLA Rules: `/sla-rules/`, `/sla-rules/{id}`
+- SLA Tracking: `/sla-tracking/active`, `/sla-tracking/breached`, `/sla-tracking/completed`, `/sla-tracking/record/{module_name}/{record_id}`
+- Approval Escalations: `/approval-escalations/`, `/approval-escalations/pending`, `/approval-escalations/{id}/resolve`, `/approval-escalations/{id}/cancel`
+- Approval Delegations: `/approval-delegations/`, `/approval-delegations/me`, `/approval-delegations/active`, `/approval-delegations/{id}/cancel`
+- Notification Preferences: `/notification-preferences/me`
 
 ## Screenshots
 
@@ -152,7 +166,8 @@ Screenshots/
 |-- Phase 1 Screenshots/
 |-- Phase 2 Screenshots/
 |-- Phase 3 Screenshots/
-`-- Phase 4 to 7 Screenshots/
+|-- Phase 4 to 7 Screenshots/
+`-- Phase 8 Screenshots/
 ```
 
 ## Notes

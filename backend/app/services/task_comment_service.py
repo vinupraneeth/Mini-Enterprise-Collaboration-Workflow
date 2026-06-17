@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
@@ -164,7 +168,7 @@ def add_comment_to_task(
                 message
             )
 
-    db.commit()
+    handle_db_commit(db)
 
     invalidate_dashboard_cache()
 

@@ -1,3 +1,9 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
+from datetime import datetime
+
 from fastapi import HTTPException
 
 from sqlalchemy import and_, or_, select
@@ -14,6 +20,10 @@ from app.models.task_history_model import TaskHistory
 
 from app.models.user_model import User
 
+from app.models.workflow_governance_model import (
+    ApprovalEscalation
+)
+
 from app.schemas.approval_schema import ApprovalCreate, ApprovalReview
 
 from app.services.audit_log_service import (
@@ -28,12 +38,29 @@ from app.core.cache import (
     invalidate_dashboard_cache
 )
 
+from app.services.sla_service import (
+    apply_sla_to_approval_if_available,
+    complete_sla_for_record
+)
+
+from app.services.workflow_governance_service import (
+    user_has_active_delegation_from
+)
+
 
 def manager_can_access_approval(
     db: Session,
     approval: Approval,
     current_user
 ):
+
+    if approval.requested_by == current_user.id:
+
+        return False
+
+    if approval.current_escalation_to == current_user.id:
+
+        return True
 
     if approval.task_id is None:
 
@@ -53,7 +80,7 @@ def manager_can_access_approval(
 
         return False
 
-    return (
+    if (
         approval.requested_by != current_user.id
         and
         (
@@ -61,7 +88,23 @@ def manager_can_access_approval(
             or
             task.assigned_to == current_user.id
         )
-    )
+    ):
+
+        return True
+
+    if (
+        task.created_by
+        and
+        user_has_active_delegation_from(
+            db,
+            current_user.id,
+            task.created_by
+        )
+    ):
+
+        return True
+
+    return False
 
 
 def create_approval_history(
@@ -102,6 +145,29 @@ def create_approval_history(
     return history
 
 
+def resolve_pending_escalations_for_approval(
+    db: Session,
+    approval: Approval
+):
+
+    pending_escalations = db.execute(
+        select(ApprovalEscalation).where(
+            ApprovalEscalation.approval_id == approval.id,
+            ApprovalEscalation.status == "pending"
+        )
+    ).scalars().all()
+
+    for escalation in pending_escalations:
+
+        escalation.status = "resolved"
+
+        escalation.resolved_at = datetime.utcnow()
+
+    approval.is_escalated = False
+
+    approval.current_escalation_to = None
+
+
 def update_task_status_after_approval(
     db: Session,
     task: Task,
@@ -111,11 +177,27 @@ def update_task_status_after_approval(
 
     if task.status == new_status:
 
+        if new_status == "done":
+
+            complete_sla_for_record(
+                db,
+                "task",
+                task.id
+            )
+
         return
 
     old_status = task.status
 
     task.status = new_status
+
+    if new_status == "done":
+
+        complete_sla_for_record(
+            db,
+            "task",
+            task.id
+        )
 
     history = TaskHistory(
 
@@ -171,6 +253,16 @@ def create_approval_request(
     current_user
 ):
     task = None
+
+    if current_user.role not in [
+        "manager",
+        "employee"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Only Manager or Employee users can raise approval requests"
+        )
 
     if current_user.role == "admin":
 
@@ -231,6 +323,11 @@ def create_approval_request(
     db.add(approval)
     db.flush()
 
+    apply_sla_to_approval_if_available(
+        db,
+        approval
+    )
+
     create_approval_history(
 
         db=db,
@@ -282,7 +379,7 @@ def create_approval_request(
                     f"New approval request #{approval.id} is waiting for admin review."
                 )
 
-    db.commit()
+    handle_db_commit(db)
 
     invalidate_dashboard_cache()
 
@@ -515,6 +612,19 @@ def review_approval_request(
         new_status=approval.status
     )
 
+    if approval.current_level == "completed":
+
+        complete_sla_for_record(
+            db,
+            "approval",
+            approval.id
+        )
+
+        resolve_pending_escalations_for_approval(
+            db,
+            approval
+        )
+
     action_labels = {
 
         "approve": "approved",
@@ -571,7 +681,7 @@ def review_approval_request(
                     f"Approval request #{approval.id} is waiting for final admin review."
                 )
 
-    db.commit()
+    handle_db_commit(db)
 
     invalidate_dashboard_cache()
 

@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from app.models.task_history_model import (
     TaskHistory
 )
@@ -24,7 +28,7 @@ def create_task_history(
 
     db.add(history)
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(history)
 

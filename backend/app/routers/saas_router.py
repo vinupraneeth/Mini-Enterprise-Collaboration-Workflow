@@ -12,8 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import (
-    get_current_user,
-    require_admin
+    require_admin,
+    require_roles
 )
 
 from app.db.deps import get_db
@@ -89,7 +89,15 @@ def create_organization_api(
 )
 def get_organization_api(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(
+        require_roles(
+            [
+                "admin",
+                "manager",
+                "employee"
+            ]
+        )
+    )
 ):
 
     return get_current_organization(
@@ -104,7 +112,15 @@ def get_organization_api(
 )
 def get_plans_api(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(
+        require_roles(
+            [
+                "admin",
+                "manager",
+                "employee"
+            ]
+        )
+    )
 ):
 
     return get_subscription_plans(
@@ -118,7 +134,15 @@ def get_plans_api(
 )
 def get_subscription_api(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(
+        require_roles(
+            [
+                "admin",
+                "manager",
+                "employee"
+            ]
+        )
+    )
 ):
 
     return get_current_subscription(
@@ -133,7 +157,15 @@ def get_subscription_api(
 )
 def get_credits_api(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(
+        require_roles(
+            [
+                "admin",
+                "manager",
+                "employee"
+            ]
+        )
+    )
 ):
 
     return get_credit_history(

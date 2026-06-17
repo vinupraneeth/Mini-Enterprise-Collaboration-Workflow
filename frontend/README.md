@@ -1,6 +1,6 @@
 # Frontend - Mini Enterprise Collaboration Workflow
 
-This folder contains the React frontend for the Mini Enterprise Collaboration Workflow project. It connects with the FastAPI backend and provides the screens used for login, task management, Kanban workflow, approvals, comments, documents, notifications, audit logs, dashboard updates, intelligent insights, and subscription management.
+This folder contains the React frontend for the Mini Enterprise Collaboration Workflow project. It connects with the FastAPI backend and provides the screens used for login, task management, Kanban workflow, approvals, comments, documents, notifications, audit logs, dashboard updates, intelligent insights, subscription management, and workflow governance.
 
 ## Tech Stack
 
@@ -32,6 +32,12 @@ This folder contains the React frontend for the Mini Enterprise Collaboration Wo
 - Admin audit logs page
 - Admin subscription page
 - Razorpay checkout flow for paid plans
+- SLA Rules page
+- SLA Dashboard page
+- Approval Escalations page
+- Approval Delegations page
+- Notification Preferences page
+- Enhanced Audit Logs page with filters and detail view
 
 ## Role-Based UI
 
@@ -44,6 +50,9 @@ Admin:
 - Can see wider workflow activity
 - Can open the Subscription page
 - Can choose Basic, Silver, or Gold plans through Razorpay checkout
+- Can create and manage SLA rules
+- Can view SLA tracking and approval escalation records
+- Can manage approval delegations
 
 Manager:
 - Can create and assign tasks to employees
@@ -52,6 +61,9 @@ Manager:
 - Can raise general approval requests
 - Can add public comments and internal notes
 - Can view related documents, notifications, and activity
+- Can view SLA dashboard records related to accessible work
+- Can escalate valid manager-level approvals to Admin
+- Can create approval delegations to eligible Manager users
 
 Employee:
 - Can view assigned tasks
@@ -61,6 +73,12 @@ Employee:
 - Can view related notifications and activity
 - Can raise general approval requests
 - Cannot create internal notes or review approvals
+
+Auditor:
+- Can view the Auditor dashboard
+- Can view SLA Dashboard, Escalations, Audit Logs, and Preferences
+- Has read-only access to governance and audit information
+- Cannot create tasks, approvals, delegations, or subscription changes
 
 ## Setup
 
@@ -99,3 +117,5 @@ The frontend stores the JWT token in local storage after login and sends it with
 Document upload and download are handled from the task documents modal. Dashboard panels show summary, notifications, activity, AI insights, role-specific actions, and smart assignment suggestions based on the logged-in user's role.
 
 The Subscription page is available to Admin users from the top navigation. Paid plans open Razorpay Checkout when Razorpay test or live keys are configured in the backend environment.
+
+Phase 8 governance screens are available from the top navigation based on role. SLA Rules are Admin-only, SLA Dashboard and Escalations are available to governance viewers, Delegations are available to Admin and Manager users, and Notification Preferences are available to all logged-in users.

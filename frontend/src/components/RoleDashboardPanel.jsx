@@ -3,10 +3,6 @@ import {
   useState
 } from "react"
 
-import {
-  useNavigate
-} from "react-router-dom"
-
 import axios from "axios"
 
 
@@ -26,32 +22,6 @@ export default function RoleDashboardPanel({
 
   const token =
     localStorage.getItem("token")
-
-  const navigate =
-    useNavigate()
-
-
-  const handleAction =
-    (target) => {
-
-      if (target?.startsWith("/")) {
-
-        navigate(target)
-
-        return
-      }
-
-      const element =
-        document.getElementById(
-          target
-        )
-
-      element?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      })
-    }
-
 
   const fetchRoleView =
     async () => {
@@ -159,40 +129,6 @@ export default function RoleDashboardPanel({
               </p>
 
             </div>
-          )
-        )}
-
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-5">
-
-        {roleView.actions?.map(
-          (action) => (
-
-            <button
-              key={action.label}
-              type="button"
-              onClick={() =>
-                handleAction(
-                  action.target
-                )
-              }
-              className="text-left border border-slate-200 rounded-xl px-4 py-4 bg-white hover:bg-slate-50 transition"
-            >
-
-              <span className="block text-sm font-bold text-slate-900">
-
-                {action.label}
-
-              </span>
-
-              <span className="block text-sm text-slate-600 mt-2 leading-5">
-
-                {action.description}
-
-              </span>
-
-            </button>
           )
         )}
 

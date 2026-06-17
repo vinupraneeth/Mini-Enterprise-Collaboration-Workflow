@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -58,7 +62,8 @@ def register_user(
     valid_roles = [
         "admin",
         "manager",
-        "employee"
+        "employee",
+        "auditor"
     ]
 
     user_role = user.role.lower()
@@ -154,7 +159,7 @@ def login_user(
 
     db.add(refresh_token_record)
 
-    db.commit()
+    handle_db_commit(db)
 
     return {
 
@@ -283,7 +288,7 @@ def request_password_reset(
 
     db.add(reset_token_record)
 
-    db.commit()
+    handle_db_commit(db)
 
     return {
 
@@ -350,7 +355,7 @@ def confirm_password_reset(
 
     reset_token_record.used = True
 
-    db.commit()
+    handle_db_commit(db)
 
     return {
 

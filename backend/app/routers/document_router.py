@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from pathlib import Path
 
 from fastapi import (
@@ -108,7 +112,7 @@ def download_document_api(
         document.id
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     return FileResponse(
         path,

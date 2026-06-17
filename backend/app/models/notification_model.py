@@ -36,6 +36,16 @@ class Notification(Base):
         nullable=False
     )
 
+    notification_type: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True
+    )
+
+    priority: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True
+    )
+
     is_read: Mapped[bool] = mapped_column(
         Boolean,
         default=False

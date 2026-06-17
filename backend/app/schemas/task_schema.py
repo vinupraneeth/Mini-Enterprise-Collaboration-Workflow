@@ -141,6 +141,12 @@ class TaskResponse(BaseModel):
 
     due_date: datetime | None = None
 
+    sla_status: str | None = None
+
+    sla_due_time: datetime | None = None
+
+    is_sla_breached: bool = False
+
     assigned_to: int
 
     assigned_to_name: str | None = None

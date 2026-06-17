@@ -1,6 +1,6 @@
 # Backend - Mini Enterprise Collaboration Workflow
 
-This folder contains the FastAPI backend for the Mini Enterprise Collaboration Workflow project. The backend handles authentication, role-based access, tasks, comments, approvals, documents, notifications, audit logs, dashboard data, real-time updates, intelligent insights, SaaS subscriptions, credits, and Razorpay billing.
+This folder contains the FastAPI backend for the Mini Enterprise Collaboration Workflow project. The backend handles authentication, role-based access, tasks, comments, approvals, documents, notifications, audit logs, dashboard data, real-time updates, intelligent insights, SaaS subscriptions, credits, Razorpay billing, and Phase 8 workflow governance.
 
 The code follows a simple layered structure:
 
@@ -80,7 +80,8 @@ Notifications:
 
 Audit Logs and Activity:
 - Audit logs record important backend actions
-- Audit logs are available to Admin users
+- Audit logs are available to Admin and Auditor users
+- Audit logs support module, user, date range, and detail views
 - Activity feed is filtered based on the logged-in user's role
 
 Dashboard:
@@ -102,6 +103,19 @@ SaaS:
 - Credit ledger for usage credits
 - Billing transaction records
 - Razorpay order creation and signature verification
+
+Workflow Governance:
+- Admin can manage SLA rules for tasks and approvals
+- SLA tracking records active, breached, and completed workflow items
+- Tasks and approvals store SLA status and due time
+- Managers can escalate valid manager-level approvals to Admin
+- Admin and Manager users can manage approval delegations within allowed roles
+- Users can manage notification preferences
+- Auditor users can view audit logs, SLA tracking, and escalation records in read-only mode
+
+Error Handling:
+- Services and routers use `HTTPException` for application errors such as not found, unauthorized access, invalid workflow actions, and validation failures
+- Database commits use a shared helper that rolls back on SQLAlchemy errors and returns clean API errors for constraint or database failures
 
 ## Setup
 
@@ -239,6 +253,10 @@ Audit Logs and Activity:
 
 ```text
 GET /audit-logs/
+GET /audit-logs/module/{module_name}
+GET /audit-logs/user/{user_id}
+GET /audit-logs/date-range
+GET /audit-logs/{log_id}
 GET /activity/
 ```
 
@@ -257,6 +275,40 @@ POST  /payments/verify-razorpay
 ```
 
 All paid subscription plans are activated through Razorpay payment verification. The backend creates a Razorpay order, the frontend opens Razorpay Checkout, and the backend verifies the returned Razorpay signature before updating the subscription and credits.
+
+Workflow Governance:
+
+```text
+POST   /sla-rules/
+GET    /sla-rules/
+GET    /sla-rules/{id}
+PUT    /sla-rules/{id}
+DELETE /sla-rules/{id}
+
+POST /sla-tracking/tasks/{task_id}
+POST /sla-tracking/approvals/{approval_id}
+PUT  /sla-tracking/{tracking_id}/complete
+GET  /sla-tracking/active
+GET  /sla-tracking/breached
+GET  /sla-tracking/completed
+GET  /sla-tracking/module/{module_name}
+GET  /sla-tracking/record/{module_name}/{record_id}
+
+POST /approval-escalations/
+GET  /approval-escalations/
+GET  /approval-escalations/pending
+GET  /approval-escalations/approval/{approval_id}
+PUT  /approval-escalations/{escalation_id}/resolve
+PUT  /approval-escalations/{escalation_id}/cancel
+
+POST /approval-delegations/
+GET  /approval-delegations/me
+GET  /approval-delegations/active
+PUT  /approval-delegations/{delegation_id}/cancel
+
+GET /notification-preferences/me
+PUT /notification-preferences/me
+```
 
 ## Example Payloads
 

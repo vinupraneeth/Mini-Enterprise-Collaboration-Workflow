@@ -256,6 +256,10 @@ function RegisterPage() {
                   Admin
                 </option>
 
+                <option value="auditor">
+                  Auditor
+                </option>
+
               </select>
 
             </div>

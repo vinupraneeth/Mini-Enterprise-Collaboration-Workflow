@@ -59,6 +59,9 @@ export default function DashboardPage() {
     ? JSON.parse(storedUser)
     : null
 
+  const isAuditor =
+    user?.role === "auditor"
+
 
   const fetchDashboardAnalytics =
     async () => {
@@ -127,6 +130,15 @@ export default function DashboardPage() {
     if (!token) {
 
       navigate("/")
+
+      return
+    }
+
+    if (isAuditor) {
+
+      fetchDashboardAnalytics()
+
+      setLoading(false)
 
       return
     }
@@ -263,34 +275,34 @@ export default function DashboardPage() {
 
       try {
 
-        await axios.patch(
+        const response =
+          await axios.patch(
 
-          `http://127.0.0.1:8000/tasks/${taskId}/status`,
+            `http://127.0.0.1:8000/tasks/${taskId}/status`,
 
-          {
-            status
-          },
+            {
+              status
+            },
 
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`
+              }
             }
-          }
-        )
+          )
 
         setTasks((prevTasks) =>
 
           prevTasks.map((task) =>
 
             task.id === taskId
-              ? {
-                  ...task,
-                  status
-                }
+              ? response.data
               : task
           )
         )
+
+        fetchTasks()
 
         fetchDashboardAnalytics()
 
@@ -300,7 +312,7 @@ export default function DashboardPage() {
 
         alert(
           error.response?.data?.detail ||
-          "Status update failed"
+          `Status update failed for task #${taskId}`
         )
       }
     }
@@ -356,7 +368,9 @@ export default function DashboardPage() {
 
             <p className="text-slate-500 mt-1">
 
-              Manage enterprise workflow tasks
+              {isAuditor
+                ? "Review governance, SLA, escalation, and audit records"
+                : "Manage enterprise workflow tasks"}
 
             </p>
 
@@ -376,9 +390,12 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <TaskStatsCards
-          stats={stats}
-        />
+        {!isAuditor && (
+
+          <TaskStatsCards
+            stats={stats}
+          />
+        )}
 
         <div className="mt-6">
 
@@ -388,96 +405,105 @@ export default function DashboardPage() {
 
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 mt-6 items-start">
+        {!isAuditor && (
 
-          <div
-            id="analytics"
-            className="space-y-6 min-w-0 scroll-mt-6"
-          >
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 mt-6 items-start">
 
-            <DashboardAnalytics
-              stats={stats}
-              analytics={analytics}
-            />
+            <div
+              id="analytics"
+              className="space-y-6 min-w-0 scroll-mt-6"
+            >
 
-            <AiSummaryPanel />
+              <DashboardAnalytics
+                stats={stats}
+                analytics={analytics}
+              />
 
-            <SmartAssignmentPanel
-              user={user}
-            />
+              <AiSummaryPanel />
 
-          </div>
-
-          <NotificationsPanel
-            id="notifications"
-            user={user}
-            refreshKey={
-              notificationRefreshKey
-            }
-          />
-
-        </div>
-
-        <div
-          id="kanban"
-          className="mt-8 scroll-mt-6"
-        >
-
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-
-            <div>
-
-              <h2 className="text-2xl font-bold text-slate-900">
-
-                Task Board
-
-              </h2>
-
-              <p className="text-sm text-slate-500 mt-1">
-
-                Track assigned work from creation to completion
-
-              </p>
+              <SmartAssignmentPanel
+                user={user}
+              />
 
             </div>
 
-          </div>
-
-          {loading ? (
-
-            <div className="text-center py-20 text-gray-500">
-
-              Loading tasks...
-
-            </div>
-
-          ) : (
-
-            <KanbanBoard
-
-              tasks={tasks}
-
+            <NotificationsPanel
+              id="notifications"
               user={user}
-
-              onEdit={handleEdit}
-
-              onDelete={handleDelete}
-
-              onStatusChange={
-                handleStatusChange
+              refreshKey={
+                notificationRefreshKey
               }
             />
-          )}
-        </div>
 
-        <div
-          id="activity"
-          className="scroll-mt-6"
-        >
+          </div>
+        )}
 
-          <ActivityFeedPanel />
+        {!isAuditor && (
 
-        </div>
+          <div
+            id="kanban"
+            className="mt-8 scroll-mt-6"
+          >
+
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+
+              <div>
+
+                <h2 className="text-2xl font-bold text-slate-900">
+
+                  Task Board
+
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+
+                  Track assigned work from creation to completion
+
+                </p>
+
+              </div>
+
+            </div>
+
+            {loading ? (
+
+              <div className="text-center py-20 text-gray-500">
+
+                Loading tasks...
+
+              </div>
+
+            ) : (
+
+              <KanbanBoard
+
+                tasks={tasks}
+
+                user={user}
+
+                onEdit={handleEdit}
+
+                onDelete={handleDelete}
+
+                onStatusChange={
+                  handleStatusChange
+                }
+              />
+            )}
+          </div>
+        )}
+
+        {!isAuditor && (
+
+          <div
+            id="activity"
+            className="scroll-mt-6"
+          >
+
+            <ActivityFeedPanel />
+
+          </div>
+        )}
       </div>
 
       {isModalOpen && !editingTask && (

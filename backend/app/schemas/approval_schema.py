@@ -91,6 +91,14 @@ class ApprovalResponse(BaseModel):
 
     current_level: str | None = None
 
+    sla_status: str | None = None
+
+    sla_due_time: datetime | None = None
+
+    is_escalated: bool = False
+
+    current_escalation_to: int | None = None
+
     remarks: str | None = None
 
     created_at: datetime

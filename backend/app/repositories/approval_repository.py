@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from sqlalchemy import select
 
 from sqlalchemy.orm import Session
@@ -14,7 +18,7 @@ def create_approval(
 
     db.add(approval)
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(approval)
 
@@ -51,7 +55,7 @@ def update_approval(
     approval: Approval
 ):
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(approval)
 

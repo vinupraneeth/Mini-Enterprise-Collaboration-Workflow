@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from datetime import datetime, timedelta, timezone
 
 import json
@@ -205,7 +209,7 @@ def issue_oauth_tokens(
 
     db.add(refresh_token_record)
 
-    db.commit()
+    handle_db_commit(db)
 
     return {
         "access_token": access_token,

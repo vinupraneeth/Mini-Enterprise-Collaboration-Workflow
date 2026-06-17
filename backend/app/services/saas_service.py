@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from fastapi import HTTPException
 
 from sqlalchemy import select
@@ -67,7 +71,7 @@ def get_current_organization(
 
     current_user.organization_id = organization.id
 
-    db.commit()
+    handle_db_commit(db)
 
     return organization
 
@@ -97,7 +101,7 @@ def create_organization(
 
     db.add(organization)
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(organization)
 
@@ -192,7 +196,7 @@ def get_current_subscription(
         )
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(subscription)
 
@@ -240,7 +244,7 @@ def record_billing_transaction(
 
     db.add(transaction)
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(transaction)
 

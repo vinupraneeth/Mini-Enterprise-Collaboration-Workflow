@@ -1,3 +1,7 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 import importlib
 
 from fastapi import HTTPException
@@ -242,7 +246,7 @@ def activate_paid_subscription(
         )
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(subscription)
 

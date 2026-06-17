@@ -39,6 +39,7 @@ uploads/
 *.db
 *.sqlite
 *.sqlite3
+backend/db_backups/
 
 # OS files
 .DS_Store

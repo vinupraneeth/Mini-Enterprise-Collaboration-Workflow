@@ -46,6 +46,16 @@ def get_task_conditions(current_user):
 
     role = current_user.role.lower()
 
+    if role not in [
+        "admin",
+        "manager",
+        "employee"
+    ]:
+
+        return [
+            Task.id == -1
+        ]
+
     organization_condition = []
 
     if current_user.organization_id:
@@ -267,6 +277,18 @@ def get_dashboard_analytics(
         approval_conditions.append(
             Approval.requested_by ==
             current_user.id
+        )
+
+    else:
+
+        task_conditions.extend(
+            get_task_conditions(
+                current_user
+            )
+        )
+
+        approval_conditions.append(
+            Approval.id == -1
         )
 
     total_tasks = count_records(
@@ -817,6 +839,40 @@ def get_role_dashboard(
                     "label": "Check Activity Feed",
                     "description": "Review recent task, comment, approval, and document activity.",
                     "target": "activity"
+                }
+            ]
+        }
+
+    if role == "auditor":
+
+        return {
+            "role": role,
+            "title": "Auditor Monitoring View",
+            "summary": [
+                {
+                    "label": "Operational Tasks",
+                    "value": 0
+                },
+                {
+                    "label": "Operational Approvals",
+                    "value": 0
+                }
+            ],
+            "actions": [
+                {
+                    "label": "Review SLA Dashboard",
+                    "description": "View SLA tracking and breached workflow records.",
+                    "target": "/dashboard/sla"
+                },
+                {
+                    "label": "Review Escalations",
+                    "description": "View approval escalation records in read-only mode.",
+                    "target": "/approval-escalations"
+                },
+                {
+                    "label": "Open Audit Logs",
+                    "description": "Inspect backend activity and filtering records.",
+                    "target": "/audit-logs"
                 }
             ]
         }

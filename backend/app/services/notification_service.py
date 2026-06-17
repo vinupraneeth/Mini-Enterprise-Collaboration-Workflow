@@ -1,8 +1,16 @@
+from app.utils.db_exceptions import (
+    handle_db_commit
+)
+
 from fastapi import HTTPException
 
 from sqlalchemy import select
 
 from app.models.notification_model import Notification
+
+from app.models.workflow_governance_model import (
+    NotificationPreference
+)
 
 from app.services.websocket_manager import (
     manager
@@ -13,6 +21,45 @@ from app.services.audit_log_service import (
 )
 
 import asyncio
+
+
+def notification_allowed_for_user(
+    db,
+    user_id,
+    notification_type
+):
+
+    preference = db.execute(
+        select(NotificationPreference).where(
+            NotificationPreference.user_id == user_id
+        )
+    ).scalar_one_or_none()
+
+    if not preference:
+
+        return True
+
+    if not preference.in_app_enabled:
+
+        return False
+
+    if notification_type == "task":
+
+        return preference.task_notifications
+
+    if notification_type == "approval":
+
+        return preference.approval_notifications
+
+    if notification_type == "escalation":
+
+        return preference.escalation_notifications
+
+    if notification_type == "document":
+
+        return preference.document_notifications
+
+    return True
 
 
 def dispatch_websocket_message(
@@ -56,14 +103,28 @@ def dispatch_kanban_update(
 def create_notification(
     db,
     user_id,
-    message
+    message,
+    notification_type=None,
+    priority="medium"
 ):
+
+    if not notification_allowed_for_user(
+        db,
+        user_id,
+        notification_type
+    ):
+
+        return None
 
     notification = Notification(
 
         user_id=user_id,
 
         message=message,
+
+        notification_type=notification_type,
+
+        priority=priority,
 
         is_read=False
     )
@@ -78,6 +139,8 @@ def create_notification(
             "notification": {
                 "user_id": user_id,
                 "message": message,
+                "notification_type": notification_type,
+                "priority": priority,
                 "is_read": False
             }
         }
@@ -147,7 +210,7 @@ def mark_notification_read(
         notification.id
     )
 
-    db.commit()
+    handle_db_commit(db)
 
     db.refresh(notification)
 
