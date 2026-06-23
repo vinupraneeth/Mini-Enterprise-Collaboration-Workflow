@@ -53,7 +53,7 @@ The project was developed in phases. The first phase focused on authentication, 
 - Tenant-scoped workspace management with public/private visibility and archive/restore actions
 - Workspace member management with Workspace Admin, Moderator, Member, and Viewer roles
 - Workspace channel foundation with public, private, announcement, and project channels
-- Docker Compose MySQL service for local development and Phase 10A demo delivery
+- Docker Compose MySQL service for local development and Phase 10A database setup
 - Shared database commit exception handling with rollback on database errors
 
 ## Tech Stack
@@ -209,18 +209,19 @@ http://localhost:5173
 - Workspace Members: `/workspaces/{workspace_id}/members`, `/workspaces/{workspace_id}/members/{user_id}/role`
 - Channels: `/channels`, `/workspaces/{workspace_id}/channels`, `/channels/{channel_id}`, `/channels/{channel_id}/join`, `/channels/{channel_id}/leave`
 
-## Demo Data
+## Sample Data
 
-The clean local demo database contains the original project users and baseline workflow data:
+The local development database contains the original workflow users and baseline task data:
 
 ```text
 Admin:    arjun.admin@example.com / Admin@123
 Managers: kavya.manager@example.com, vikram.manager@example.com / Manager@12345
 Employees: ananya.employee@example.com, rahul.employee@example.com, meenakshi.employee@example.com, suresh.employee@example.com, lakshmi.employee@example.com / Employee@12345
 Auditor:  meera.auditor@example.com / Auditor@12345
+Tenant Admin: rohan.mehta@nexoratech.example.com / Tenant@12345
 ```
 
-The Phase 10A collaboration tables are intentionally clean in the demo database. During a demo, create a tenant through Swagger, onboard its first tenant admin, then create workspaces, members, and channels to show the full flow from a clean state.
+Phase 10A sample data includes one tenant, tenant onboarding, collaboration settings, usage tracking, workspaces, workspace members, channels, and channel members. This keeps the database aligned with the implemented tenant collaboration flow while preserving the earlier task and governance data.
 
 ## Screenshots
 
@@ -248,6 +249,6 @@ Screenshots/
 - Password reset uses secure reset tokens. In local development, the token is displayed for testing; in production, the same token should be delivered by email.
 - Redis caching is optional. If Redis is not running, the backend uses an in-memory cache fallback.
 - Uploaded files are stored locally during development and ignored by git.
-- Phase 10A is a backend/API foundation phase. Tenant, workspace, member, and channel flows are tested and demonstrated from Swagger.
+- Phase 10A is implemented as a backend/API foundation for tenant onboarding, workspaces, members, and channels.
 - Docker MySQL uses port `3307` on the host so it can run beside an existing local MySQL service on port `3306`.
-- Run `npm run build` inside `frontend` before final submission to confirm the frontend build.
+- Run `npm run build` inside `frontend` to confirm the frontend build.

@@ -171,7 +171,7 @@ RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
 
 After changing `.env`, restart the backend server.
 
-Phase 10A uses MySQL through Docker for the local demo database. Start it from the project root:
+Phase 10A uses MySQL through Docker for the local development database. Start it from the project root:
 
 ```bash
 docker compose up -d mysql
@@ -499,10 +499,10 @@ Channel:
 }
 ```
 
-Document upload is handled as multipart form data from Swagger or from the frontend document modal.
+Document upload is handled as multipart form data from the API or from the frontend document modal.
 
-## Phase 10A Demo Notes
+## Phase 10A Data Notes
 
-For the clean demo database, the original users remain as IDs 1 to 9 and the Phase 10A tenant/workspace/channel tables start empty. This keeps the demo flow clear: create or onboard a tenant from Swagger, log in as the tenant admin if needed, then create workspaces, add members, and create channels.
+The local development database keeps the original users as IDs 1 to 9 and adds Phase 10A tenant collaboration sample records from ID 10 onward.
 
-The local and Docker databases were kept aligned for the final demo. Use Docker MySQL on `localhost:3307` when showing the deliverable because the Phase 10A mail specifically asks for MySQL running through Docker.
+The Docker MySQL database on `localhost:3307` is the primary local database target for Phase 10A. It contains the tenant onboarding, collaboration settings, usage, workspace, member, and channel records used for API verification.
