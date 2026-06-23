@@ -93,6 +93,18 @@ from app.routers.notification_preference_router import (
     router as notification_preference_router
 )
 
+from app.routers.tenant_router import (
+    router as tenant_router
+)
+
+from app.routers.workspace_router import (
+    router as workspace_router
+)
+
+from app.routers.channel_router import (
+    router as channel_router
+)
+
 #CORS MIDDLEWARE COnFIG for CROSS ORIGIN request handling
 app = FastAPI()
 
@@ -161,5 +173,11 @@ app.include_router(approval_escalation_router)
 app.include_router(approval_delegation_router)
 
 app.include_router(notification_preference_router)
+
+app.include_router(tenant_router)
+
+app.include_router(workspace_router)
+
+app.include_router(channel_router)
 
 add_pagination(app)

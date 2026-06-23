@@ -29,9 +29,44 @@ class Organization(Base):
         index=True
     )
 
+    contact_email: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        unique=True,
+        index=True
+    )
+
+    phone: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True
+    )
+
+    address: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
+
+    industry: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="ACTIVE",
+        index=True
+    )
+
     created_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )
 
     users = relationship(

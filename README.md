@@ -1,8 +1,8 @@
 # Mini Enterprise Collaboration Workflow
 
-Mini Enterprise Collaboration Workflow is a full-stack application for managing internal tasks, approvals, comments, documents, and workflow updates. It is built with FastAPI, React, MySQL, and Tailwind CSS.
+Mini Enterprise Collaboration Workflow is a full-stack application for managing internal tasks, approvals, comments, documents, workflow updates, tenant onboarding, and collaboration spaces. It is built with FastAPI, React, MySQL, and Tailwind CSS.
 
-The project was developed in phases. The first phase focused on authentication, roles, and task management. Later phases added Kanban workflow tracking, comments, approvals, dashboard analytics, document versioning, notifications, audit logs, activity tracking, advanced authentication, WebSockets, intelligent task insights, multi-tenant SaaS support, subscription plans, credits, Razorpay billing integration, and workflow governance features such as SLA tracking, approval escalations, delegations, notification preferences, and Auditor access.
+The project was developed in phases. The first phase focused on authentication, roles, and task management. Later phases added Kanban workflow tracking, comments, approvals, dashboard analytics, document versioning, notifications, audit logs, activity tracking, advanced authentication, WebSockets, intelligent task insights, multi-tenant SaaS support, subscription plans, credits, Razorpay billing integration, and workflow governance features such as SLA tracking, approval escalations, delegations, notification preferences, and Auditor access. Phase 10A adds the backend foundation for SaaS tenant onboarding, tenant collaboration limits, tenant workspaces, workspace members, and workspace channels.
 
 ## Features
 
@@ -47,6 +47,13 @@ The project was developed in phases. The first phase focused on authentication, 
 - User notification preferences
 - Enhanced audit log filtering and detail view
 - Auditor role with read-only access to audit and governance views
+- Platform tenant management with create, update, list, view, suspend, and activate support
+- Tenant onboarding with first admin creation and default collaboration setup
+- Tenant collaboration settings and usage tracking for workspace, channel, member, and storage limits
+- Tenant-scoped workspace management with public/private visibility and archive/restore actions
+- Workspace member management with Workspace Admin, Moderator, Member, and Viewer roles
+- Workspace channel foundation with public, private, announcement, and project channels
+- Docker Compose MySQL service for local development and Phase 10A demo delivery
 - Shared database commit exception handling with rollback on database errors
 
 ## Tech Stack
@@ -85,6 +92,7 @@ mini-enterprise-workflow/
 |   |-- package.json
 |   `-- README.md
 |-- Screenshots/
+|-- docker-compose.yml
 `-- README.md
 ```
 
@@ -101,6 +109,45 @@ Create a `.env` file inside the `backend` folder. The required variables are sho
 
 ```text
 backend/.env.example
+```
+
+Start the MySQL database through Docker from the project root:
+
+```bash
+docker compose up -d mysql
+```
+
+Default Docker database values:
+
+```text
+Database: workflow_db
+User: workflow_user
+Password: workflow_password
+Host port: 3307
+Container port: 3306
+```
+
+Example backend database URL for the included Docker MySQL service:
+
+```text
+DATABASE_URL=mysql+pymysql://workflow_user:workflow_password@localhost:3307/workflow_db
+```
+
+Useful Docker checks:
+
+```bash
+docker compose ps
+docker exec mecw_mysql mysqladmin ping -h localhost -uworkflow_user -pworkflow_password
+```
+
+MySQL Workbench can connect to the Docker database with:
+
+```text
+Host: 127.0.0.1
+Port: 3307
+User: workflow_user
+Password: workflow_password
+Default schema: workflow_db
 ```
 
 Run the database migrations:
@@ -156,6 +203,24 @@ http://localhost:5173
 - Approval Escalations: `/approval-escalations/`, `/approval-escalations/pending`, `/approval-escalations/{id}/resolve`, `/approval-escalations/{id}/cancel`
 - Approval Delegations: `/approval-delegations/`, `/approval-delegations/me`, `/approval-delegations/active`, `/approval-delegations/{id}/cancel`
 - Notification Preferences: `/notification-preferences/me`
+- Tenants: `/tenants/`, `/tenants/{tenant_id}`, `/tenants/onboard`, `/tenants/{tenant_id}/admin`, `/tenants/{tenant_id}/onboarding-status`
+- Tenant Collaboration: `/tenants/{tenant_id}/collaboration/settings`, `/tenants/{tenant_id}/collaboration/usage`, `/tenants/{tenant_id}/collaboration/recalculate-usage`
+- Workspaces: `/workspaces/`, `/workspaces/{workspace_id}`, `/workspaces/{workspace_id}/archive`, `/workspaces/{workspace_id}/restore`
+- Workspace Members: `/workspaces/{workspace_id}/members`, `/workspaces/{workspace_id}/members/{user_id}/role`
+- Channels: `/channels`, `/workspaces/{workspace_id}/channels`, `/channels/{channel_id}`, `/channels/{channel_id}/join`, `/channels/{channel_id}/leave`
+
+## Demo Data
+
+The clean local demo database contains the original project users and baseline workflow data:
+
+```text
+Admin:    arjun.admin@example.com / Admin@123
+Managers: kavya.manager@example.com, vikram.manager@example.com / Manager@12345
+Employees: ananya.employee@example.com, rahul.employee@example.com, meenakshi.employee@example.com, suresh.employee@example.com, lakshmi.employee@example.com / Employee@12345
+Auditor:  meera.auditor@example.com / Auditor@12345
+```
+
+The Phase 10A collaboration tables are intentionally clean in the demo database. During a demo, create a tenant through Swagger, onboard its first tenant admin, then create workspaces, members, and channels to show the full flow from a clean state.
 
 ## Screenshots
 
@@ -167,7 +232,8 @@ Screenshots/
 |-- Phase 2 Screenshots/
 |-- Phase 3 Screenshots/
 |-- Phase 4 to 7 Screenshots/
-`-- Phase 8 Screenshots/
+|-- Phase 8 Screenshots/
+`-- Phase 10A Screenshots/
 ```
 
 ## Notes
@@ -182,4 +248,6 @@ Screenshots/
 - Password reset uses secure reset tokens. In local development, the token is displayed for testing; in production, the same token should be delivered by email.
 - Redis caching is optional. If Redis is not running, the backend uses an in-memory cache fallback.
 - Uploaded files are stored locally during development and ignored by git.
+- Phase 10A is a backend/API foundation phase. Tenant, workspace, member, and channel flows are tested and demonstrated from Swagger.
+- Docker MySQL uses port `3307` on the host so it can run beside an existing local MySQL service on port `3306`.
 - Run `npm run build` inside `frontend` before final submission to confirm the frontend build.

@@ -1,6 +1,6 @@
 # Backend - Mini Enterprise Collaboration Workflow
 
-This folder contains the FastAPI backend for the Mini Enterprise Collaboration Workflow project. The backend handles authentication, role-based access, tasks, comments, approvals, documents, notifications, audit logs, dashboard data, real-time updates, intelligent insights, SaaS subscriptions, credits, Razorpay billing, and Phase 8 workflow governance.
+This folder contains the FastAPI backend for the Mini Enterprise Collaboration Workflow project. The backend handles authentication, role-based access, tasks, comments, approvals, documents, notifications, audit logs, dashboard data, real-time updates, intelligent insights, SaaS subscriptions, credits, Razorpay billing, Phase 8 workflow governance, and the Phase 10A tenant-aware workspace/channel foundation.
 
 The code follows a simple layered structure:
 
@@ -104,6 +104,18 @@ SaaS:
 - Billing transaction records
 - Razorpay order creation and signature verification
 
+Tenant and Collaboration Foundation:
+- Platform Admin can create, update, list, view, suspend, and activate tenants
+- Tenant slug is generated automatically and checked for uniqueness
+- Tenant contact email and slug duplication are blocked
+- Tenant onboarding can create the first tenant admin and default collaboration setup
+- Collaboration settings control workspace, channel, member, and storage limits per tenant
+- Collaboration usage tracks workspace count, channel count, member count, and storage usage
+- Workspaces are scoped to the current user's tenant and support public/private visibility
+- Workspace members have Workspace Admin, Moderator, Member, and Viewer roles
+- Channels are created inside workspaces and support PUBLIC, PRIVATE, ANNOUNCEMENT, and PROJECT types
+- Cross-tenant workspace, member, and channel access is blocked from the service layer
+
 Workflow Governance:
 - Admin can manage SLA rules for tasks and approvals
 - SLA tracking records active, breached, and completed workflow items
@@ -158,6 +170,37 @@ RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
 ```
 
 After changing `.env`, restart the backend server.
+
+Phase 10A uses MySQL through Docker for the local demo database. Start it from the project root:
+
+```bash
+docker compose up -d mysql
+```
+
+Example database URL for the included Docker MySQL service:
+
+```text
+DATABASE_URL=mysql+pymysql://workflow_user:workflow_password@localhost:3307/workflow_db
+```
+
+MySQL Workbench can connect to the Docker database with:
+
+```text
+Host: 127.0.0.1
+Port: 3307
+User: workflow_user
+Password: workflow_password
+Default schema: workflow_db
+```
+
+Docker health checks:
+
+```bash
+docker compose ps
+docker exec mecw_mysql mysqladmin ping -h localhost -uworkflow_user -pworkflow_password
+```
+
+The Docker service uses host port `3307` so it can run next to an existing local MySQL service on `3306`.
 
 Run migrations:
 
@@ -276,6 +319,62 @@ POST  /payments/verify-razorpay
 
 All paid subscription plans are activated through Razorpay payment verification. The backend creates a Razorpay order, the frontend opens Razorpay Checkout, and the backend verifies the returned Razorpay signature before updating the subscription and credits.
 
+Tenant Management:
+
+```text
+POST  /tenants/
+GET   /tenants/
+GET   /tenants/{tenant_id}
+PUT   /tenants/{tenant_id}
+PATCH /tenants/{tenant_id}/suspend
+PATCH /tenants/{tenant_id}/activate
+POST  /tenants/onboard
+POST  /tenants/{tenant_id}/admin
+GET   /tenants/{tenant_id}/onboarding-status
+```
+
+Tenant Collaboration Settings and Usage:
+
+```text
+GET  /tenants/{tenant_id}/collaboration/settings
+PUT  /tenants/{tenant_id}/collaboration/settings
+GET  /tenants/{tenant_id}/collaboration/usage
+POST /tenants/{tenant_id}/collaboration/recalculate-usage
+```
+
+Workspaces:
+
+```text
+POST  /workspaces/
+GET   /workspaces/
+GET   /workspaces/{workspace_id}
+PUT   /workspaces/{workspace_id}
+PATCH /workspaces/{workspace_id}/archive
+PATCH /workspaces/{workspace_id}/restore
+```
+
+Workspace Members:
+
+```text
+POST   /workspaces/{workspace_id}/members
+GET    /workspaces/{workspace_id}/members
+PATCH  /workspaces/{workspace_id}/members/{user_id}/role
+DELETE /workspaces/{workspace_id}/members/{user_id}
+```
+
+Channels:
+
+```text
+POST  /channels
+GET   /workspaces/{workspace_id}/channels
+GET   /channels/{channel_id}
+PUT   /channels/{channel_id}
+PATCH /channels/{channel_id}/archive
+PATCH /channels/{channel_id}/restore
+POST  /channels/{channel_id}/join
+POST  /channels/{channel_id}/leave
+```
+
 Workflow Governance:
 
 ```text
@@ -340,4 +439,70 @@ General approval request:
 }
 ```
 
+Tenant onboarding:
+
+```json
+{
+  "name": "Nexora Technologies Pvt Ltd",
+  "slug": "nexora-technologies",
+  "contact_email": "operations@nexoratech.example.com",
+  "phone": "9876543210",
+  "address": "Chennai, Tamil Nadu",
+  "industry": "Information Technology",
+  "admin_name": "Rohan Mehta",
+  "admin_email": "rohan.mehta@nexoratech.example.com",
+  "admin_password": "Tenant@12345",
+  "create_default_workspace": true
+}
+```
+
+Collaboration settings:
+
+```json
+{
+  "max_workspaces": 5,
+  "max_channels_per_workspace": 10,
+  "max_workspace_members": 50,
+  "max_storage_mb": 1024,
+  "workspace_enabled": true,
+  "channel_enabled": true
+}
+```
+
+Workspace:
+
+```json
+{
+  "name": "Finance Team",
+  "description": "Workspace for finance approvals and monthly reviews.",
+  "visibility": "PUBLIC"
+}
+```
+
+Workspace member:
+
+```json
+{
+  "user_id": 4,
+  "role": "MEMBER"
+}
+```
+
+Channel:
+
+```json
+{
+  "workspace_id": 1,
+  "name": "Budget Planning",
+  "description": "Discussion channel for budget planning work.",
+  "channel_type": "PUBLIC"
+}
+```
+
 Document upload is handled as multipart form data from Swagger or from the frontend document modal.
+
+## Phase 10A Demo Notes
+
+For the clean demo database, the original users remain as IDs 1 to 9 and the Phase 10A tenant/workspace/channel tables start empty. This keeps the demo flow clear: create or onboard a tenant from Swagger, log in as the tenant admin if needed, then create workspaces, add members, and create channels.
+
+The local and Docker databases were kept aligned for the final demo. Use Docker MySQL on `localhost:3307` when showing the deliverable because the Phase 10A mail specifically asks for MySQL running through Docker.

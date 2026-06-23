@@ -39,6 +39,8 @@ This folder contains the React frontend for the Mini Enterprise Collaboration Wo
 - Notification Preferences page
 - Enhanced Audit Logs page with filters and detail view
 
+Phase 10A tenant onboarding, workspace management, workspace membership, and channel management are backend/API foundation features. They are documented and tested through Swagger for this phase; no new React screens were required by the Phase 10A mail.
+
 ## Role-Based UI
 
 Admin:
@@ -119,3 +121,5 @@ Document upload and download are handled from the task documents modal. Dashboar
 The Subscription page is available to Admin users from the top navigation. Paid plans open Razorpay Checkout when Razorpay test or live keys are configured in the backend environment.
 
 Phase 8 governance screens are available from the top navigation based on role. SLA Rules are Admin-only, SLA Dashboard and Escalations are available to governance viewers, Delegations are available to Admin and Manager users, and Notification Preferences are available to all logged-in users.
+
+Phase 10A can be demonstrated from Swagger while the existing frontend continues to support the earlier task, approval, document, subscription, audit, and governance workflows.
